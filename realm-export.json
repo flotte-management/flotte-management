@@ -1,0 +1,92 @@
+{
+  "realm": "flotte-management",
+  "displayName": "Gestion de Flotte",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "accessTokenLifespan": 900,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 28800,
+
+  "roles": {
+    "realm": [
+      { "name": "ADMIN",       "description": "Accès complet au système" },
+      { "name": "MANAGER",     "description": "Gestion flotte et conducteurs" },
+      { "name": "TECHNICIEN",  "description": "Gestion des maintenances" },
+      { "name": "UTILISATEUR", "description": "Conducteur — accès limité" }
+    ]
+  },
+
+  "clients": [
+    {
+      "clientId": "flotte-frontend",
+      "name": "Frontend Application",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "http://localhost:3000/*",
+        "http://localhost:5173/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3000",
+        "http://localhost:5173"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    },
+    {
+      "clientId": "flotte-api-gateway",
+      "name": "API Gateway",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "7992544e-fb0a-40be-ab4c-0f24b3256c17",
+      "standardFlowEnabled": false,
+      "serviceAccountsEnabled": true,
+      "directAccessGrantsEnabled": false
+    },
+    {
+      "clientId": "flotte-services",
+      "name": "Microservices Internes",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "7992544e-fb0a-40be-ab4c-0f24b3256c17",
+      "standardFlowEnabled": false,
+      "serviceAccountsEnabled": true
+    }
+  ],
+
+  "users": [
+    {
+      "username": "admin.flotte",
+      "email": "admin@flotte.fr",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "admin123", "temporary": false }],
+      "realmRoles": ["ADMIN"]
+    },
+    {
+      "username": "souleyman.manager",
+      "email": "souleyman@flotte.fr",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "manager123", "temporary": false }],
+      "realmRoles": ["MANAGER"]
+    },
+    {
+      "username": "oussama.technicien",
+      "email": "oussama@flotte.fr",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "tech123", "temporary": false }],
+      "realmRoles": ["TECHNICIEN"]
+    },
+    {
+      "username": "moussa.conducteur",
+      "email": "moussa@flotte.fr",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "user123", "temporary": false }],
+      "realmRoles": ["UTILISATEUR"]
+    }
+  ]
+}
