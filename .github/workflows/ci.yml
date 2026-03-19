@@ -1,0 +1,51 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build vehicle-service
+        run: docker build -t vehicle-service:latest ./services/vehicle-service
+
+      - name: Build driver-service
+        run: docker build -t driver-service:latest ./services/driver-service
+
+      - name: Build maintenance-service
+        run: docker build -t maintenance-service:latest ./services/maintenance-service
+
+      - name: Build location-service
+        run: docker build -t location-service:latest ./services/location-service
+
+      - name: Build mission-service
+        run: docker build -t mission-service:latest ./services/mission-service
+
+      - name: Build notification-service
+        run: docker build -t notification-service:latest ./services/notification-service
+
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build image for scan
+        run: docker build -t vehicle-service:latest ./services/vehicle-service
+
+      - name: Scan avec Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: vehicle-service:latest
+          severity: CRITICAL,HIGH
+          exit-code: 0          
