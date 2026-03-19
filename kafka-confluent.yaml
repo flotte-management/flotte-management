@@ -25,7 +25,7 @@ spec:
       labels:
         app: kafka
     spec:
-      enableServiceLinks: false   # <--- LA MAGIE EST ICI
+      enableServiceLinks: false  
       containers:
       - name: kafka
         image: confluentinc/confluent-local:7.5.0

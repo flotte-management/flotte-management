@@ -11,9 +11,8 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o event-service ./cmd/main.go
 
-# ─────────────────────────────────────────
 # Étape 2 : Image ultra-légère
-# ─────────────────────────────────────────
+
 FROM scratch                  
 
 COPY --from=builder /app/event-service .

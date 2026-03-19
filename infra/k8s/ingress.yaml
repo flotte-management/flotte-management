@@ -46,10 +46,10 @@ spec:
                 name: mission-service
                 port:
                   number: 3000
-          - path: /api/notifications
+          - path: /api/events
             pathType: Prefix
             backend:
               service:
-                name: notification-service
+                name: event-service
                 port:
                   number: 8080

@@ -41,7 +41,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: secret
     ports:
-      - "5434:5432"             # 5434 pour éviter les conflits
+      - "5434:5432"            
     volumes:
       - pgdata_location:/var/lib/postgresql/data
     healthcheck:
@@ -57,7 +57,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: secret
     ports:
-      - "5435:5432"             # 5435 pour éviter les conflits
+      - "5435:5432"             
     volumes:
       - pgdata_maintenance:/var/lib/postgresql/data
     healthcheck:
@@ -87,7 +87,6 @@ services:
     ports:
       - "8080:8080"
     environment:
-      # CORRECTION : On aligne l'URL et les accès sur le service postgres-vehicles
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-vehicles:5432/vehicles_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: secret
@@ -108,7 +107,7 @@ services:
       - DB_NAME=drivers_db
       - DB_USER=postgres
       - DB_PASSWORD=secret
-      # - KAFKA_BOOTSTRAP_SERVERS=kafka:9092 # Commenté tant que Kafka n'est pas là
+      # - KAFKA_BOOTSTRAP_SERVERS=kafka:9092 
     depends_on:
       postgres-drivers:
         condition: service_healthy
@@ -119,8 +118,8 @@ services:
     build: ./services/location-service
     container_name: location-service
     ports:
-      - "3003:3000"             # HTTP REST
-      - "3004:3001"             # WebSocket (si port séparé)
+      - "3003:3000"            
+      - "3004:3001"            
     environment:
       - DB_HOST=postgres-location
       - DB_PORT=5432

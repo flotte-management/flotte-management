@@ -24,7 +24,7 @@ spec:
               value: kafka:9092
           resources:
             requests:
-              memory: "64Mi"      # Go est très léger
+              memory: "64Mi"    
               cpu: "100m"
             limits:
               memory: "128Mi"
