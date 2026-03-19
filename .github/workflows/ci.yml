@@ -29,8 +29,8 @@ jobs:
       - name: Build mission-service
         run: docker build -t mission-service:latest ./services/mission-service
 
-      - name: Build notification-service
-        run: docker build -t notification-service:latest ./services/notification-service
+      - name: Build event-service
+        run: docker build -t event-service:latest ./services/event-service
 
   security-scan:
     runs-on: ubuntu-latest
