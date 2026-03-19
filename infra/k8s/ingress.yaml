@@ -1,0 +1,55 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fleet-ingress
+  namespace: fleet-dev
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: fleet.local
+      http:
+        paths:
+          - path: /api/vehicles
+            pathType: Prefix
+            backend:
+              service:
+                name: vehicle-service
+                port:
+                  number: 8080
+          - path: /api/drivers
+            pathType: Prefix
+            backend:
+              service:
+                name: driver-service
+                port:
+                  number: 8000
+          - path: /api/maintenance
+            pathType: Prefix
+            backend:
+              service:
+                name: maintenance-service
+                port:
+                  number: 8000
+          - path: /api/locations
+            pathType: Prefix
+            backend:
+              service:
+                name: location-service
+                port:
+                  number: 3000
+          - path: /api/missions
+            pathType: Prefix
+            backend:
+              service:
+                name: mission-service
+                port:
+                  number: 3000
+          - path: /api/notifications
+            pathType: Prefix
+            backend:
+              service:
+                name: notification-service
+                port:
+                  number: 8080

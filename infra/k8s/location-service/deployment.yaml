@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: location-service
+  namespace: fleet-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: location-service
+  template:
+    metadata:
+      labels:
+        app: location-service
+    spec:
+      containers:
+        - name: location-service
+          image: location-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3000   # HTTP REST
+            - containerPort: 3001   # WebSocket
+          env:
+            - name: DB_HOST
+              value: postgres-postgresql
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              value: location_db
+            - name: DB_USER
+              value: postgres
+            - name: DB_PASSWORD
+              value: secret
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "125m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"

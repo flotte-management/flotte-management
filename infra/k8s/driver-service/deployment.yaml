@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: driver-service
+  namespace: fleet-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: driver-service
+  template:
+    metadata:
+      labels:
+        app: driver-service
+    spec:
+      containers:
+        - name: driver-service
+          image: driver-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DEBUG
+              value: "True"
+            - name: SECRET_KEY
+              value: "dev-secret-key"
+            - name: DB_HOST
+              value: postgres-postgresql
+            - name: DB_NAME
+              value: drivers_db
+            - name: DB_USER
+              value: postgres
+            - name: DB_PASSWORD
+              value: secret
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "125m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"

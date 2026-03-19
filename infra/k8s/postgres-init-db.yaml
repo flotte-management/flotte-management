@@ -1,0 +1,13 @@
+# infra/k8s/postgres-init-db.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-db
+  namespace: fleet-dev
+data:
+  init.sql: |
+    SELECT 'CREATE DATABASE vehicles_db' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'vehicles_db')\gexec
+    SELECT 'CREATE DATABASE drivers_db' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'drivers_db')\gexec
+    SELECT 'CREATE DATABASE maintenance_db' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'maintenance_db')\gexec
+    SELECT 'CREATE DATABASE location_db' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'location_db')\gexec
+    SELECT 'CREATE DATABASE mission_db' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'mission_db')\gexec

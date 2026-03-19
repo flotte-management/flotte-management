@@ -1,0 +1,17 @@
+server:
+  port: 8080 
+
+spring:
+  application:
+    name: vehicle-service
+  
+  datasource:
+  
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/fleet}
+    username: ${SPRING_DATASOURCE_USERNAME:user}
+    password: ${SPRING_DATASOURCE_PASSWORD:password}
+
+  jpa:
+    hibernate:
+      ddl-auto: update 
+    show-sql: true    

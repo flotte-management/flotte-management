@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mission-service
+  namespace: fleet-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mission-service
+  template:
+    metadata:
+      labels:
+        app: mission-service
+    spec:
+      containers:
+        - name: mission-service
+          image: mission-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DB_HOST
+              value: postgres-postgresql
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              value: mission_db
+            - name: DB_USER
+              value: postgres
+            - name: DB_PASSWORD
+              value: secret
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "125m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"

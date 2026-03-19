@@ -1,0 +1,193 @@
+services:
+
+  postgres-vehicles:
+    image: postgres:15-alpine
+    container_name: postgres-vehicles
+    environment:
+      POSTGRES_DB: vehicles_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata_vehicles:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 5
+
+  postgres-drivers:
+    image: postgres:15-alpine
+    container_name: postgres-drivers
+    environment:
+      POSTGRES_DB: drivers_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata_drivers:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 5
+    
+  
+  postgres-location:
+    image: postgres:15-alpine
+    container_name: postgres-location
+    environment:
+      POSTGRES_DB: location_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5434:5432"             # 5434 pour éviter les conflits
+    volumes:
+      - pgdata_location:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 5
+  
+  postgres-maintenance:
+    image: postgres:15-alpine
+    container_name: postgres-maintenance
+    environment:
+      POSTGRES_DB: maintenance_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5435:5432"             # 5435 pour éviter les conflits
+    volumes:
+      - pgdata_maintenance:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 5
+  
+  postgres-mission:
+    image: postgres:15-alpine
+    container_name: postgres-mission
+    environment:
+      POSTGRES_DB: mission_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5436:5432"
+    volumes:
+      - pgdata_mission:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 5
+
+  vehicle-service:
+    build: ./services/vehicle-service
+    container_name: vehicle-service
+    ports:
+      - "8080:8080"
+    environment:
+      # CORRECTION : On aligne l'URL et les accès sur le service postgres-vehicles
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-vehicles:5432/vehicles_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: secret
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    depends_on:
+      postgres-vehicles:
+        condition: service_healthy
+
+  driver-service:
+    build: ./services/driver-service    
+    container_name: driver-service
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=dev-secret-key
+      - DB_HOST=postgres-drivers
+      - DB_NAME=drivers_db
+      - DB_USER=postgres
+      - DB_PASSWORD=secret
+      # - KAFKA_BOOTSTRAP_SERVERS=kafka:9092 # Commenté tant que Kafka n'est pas là
+    depends_on:
+      postgres-drivers:
+        condition: service_healthy
+    command: >
+      sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+  
+  location-service:
+    build: ./services/location-service
+    container_name: location-service
+    ports:
+      - "3003:3000"             # HTTP REST
+      - "3004:3001"             # WebSocket (si port séparé)
+    environment:
+      - DB_HOST=postgres-location
+      - DB_PORT=5432
+      - DB_NAME=location_db
+      - DB_USER=postgres
+      - DB_PASSWORD=secret
+      #- KAFKA_BROKERS=kafka:9092
+    depends_on:
+      postgres-location:
+        condition: service_healthy
+      #kafka:
+       # condition: service_started
+  
+  event-service:
+    build: ./services/event-service
+    container_name: event-service
+    ports:
+      - "8003:8080"
+   # environment:
+    #  - KAFKA_BROKERS=kafka:9092
+    #depends_on:
+     # kafka:
+      #  condition: service_started
+  
+  maintenance-service:
+    build: ./services/maintenance-service
+    container_name: maintenance-service
+    ports:
+      - "8001:8000"
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=dev-secret-key
+      - DB_HOST=postgres-maintenance
+      - DB_NAME=maintenance_db
+      - DB_USER=postgres
+      - DB_PASSWORD=secret
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      postgres-maintenance:
+        condition: service_healthy
+      #kafka:
+       # condition: service_started
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+  
+  mission-service:
+    build: ./services/mission-service
+    container_name: mission-service
+    ports:
+      - "3005:3000"
+    environment:  
+      - DB_HOST=postgres-mission
+      - DB_PORT=5432
+      - DB_NAME=mission_db
+      - DB_USER=postgres
+      - DB_PASSWORD=secret
+      - KAFKA_BROKERS=kafka:9092
+    depends_on:
+      postgres-mission:
+        condition: service_healthy
+     # kafka:
+      #  condition: service_started
+
+volumes:
+  pgdata_vehicles:
+  pgdata_drivers:
+  pgdata_location:
+  pgdata_maintenance:
+  pgdata_mission:

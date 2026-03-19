@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.env
+*.egg-info/
+dist/
+build/
+
+# Java / Maven
+target/
+*.class
+*.jar
+*.war
+.mvn/
+*.iml
+
+# Node.js
+node_modules/
+dist/
+.npm/
+
+# Go
+*.exe
+*.out
+vendor/
+
+# Docker
+.docker/
+
+# Kubernetes / Helm
+*.kubeconfig
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Variables d'environnement
+.env
+.env.local
+.env.*.local
+
+# Base de données locale
+*.sqlite3
+pgdata/
+
+# Coverage / Tests
+coverage/
+.coverage
+htmlcov/
