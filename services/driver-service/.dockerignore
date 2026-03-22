@@ -2,8 +2,7 @@
 ```
 __pycache__/
 *.pyc
-*.pyo
+venv/
 .env
 .git/
 *.md
-db.sqlite3

@@ -18,12 +18,8 @@ spec:
           image: maintenance-service:latest
           imagePullPolicy: Never
           ports:
-            - containerPort: 8000
+            - containerPort: 8001
           env:
-            - name: DEBUG
-              value: "True"
-            - name: SECRET_KEY
-              value: "dev-secret-key"
             - name: DB_HOST
               value: postgres-postgresql
             - name: DB_NAME

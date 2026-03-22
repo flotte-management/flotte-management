@@ -111,8 +111,6 @@ services:
     depends_on:
       postgres-drivers:
         condition: service_healthy
-    command: >
-      sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
   
   location-service:
     build: ./services/location-service
@@ -162,9 +160,6 @@ services:
         condition: service_healthy
       #kafka:
        # condition: service_started
-    command: >
-      sh -c "python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:8000"
   
   mission-service:
     build: ./services/mission-service
