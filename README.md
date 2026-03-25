@@ -213,7 +213,7 @@ curl http://fleet.local/api/locations
 curl http://fleet.local/api/missions
 ```
 
-# 📨 Kafka 
+# Kafka 
 
 
 - **Image** : `confluentinc/confluent-local:7.5.0`
@@ -317,22 +317,6 @@ Exemples de messages à envoyer :
 
 ```bash
 kubectl port-forward deploy/kafka 9092:9092 -n fleet-dev
-```
-
-Dans `application.yml` (Spring Boot) :
-
-```yaml
-spring:
-  kafka:
-    bootstrap-servers: localhost:9092
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
-    consumer:
-      group-id: fleet-consumer-group
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 ```
 
 
