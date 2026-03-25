@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: vehicle-service
+  kafka:
+    bootstrap-servers: localhost:9092
   
   datasource:
   

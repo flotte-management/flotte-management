@@ -213,7 +213,148 @@ curl http://fleet.local/api/locations
 curl http://fleet.local/api/missions
 ```
 
+# 📨 Kafka 
+
+
+- **Image** : `confluentinc/confluent-local:7.5.0`
+- **Namespace** : `fleet-dev`
+- **Adresse interne** : `kafka.fleet-dev.svc.cluster.local:9092`
+
 ---
+
+## Démarrage
+
+### Prérequis
+
+```bash
+minikube start --memory=8192 --cpus=4
+```
+
+### Appliquer la configuration
+
+```bash
+kubectl apply -f k8s/kafka-confluent.yaml
+```
+
+### Vérifier que le pod tourne
+
+```bash
+kubectl get pods -n fleet-dev | grep kafka
+
+```
+
+---
+
+## Vérification santé du broker
+
+```bash
+# Entrer dans le pod
+kubectl exec -it deploy/kafka -n fleet-dev -- bash
+
+# Vérifier que le broker répond
+kafka-broker-api-versions --bootstrap-server localhost:9092
+```
+
+
+---
+
+## Opérations courantes
+
+### Lister les topics
+
+```bash
+kubectl exec -it deploy/kafka -n fleet-dev -- \
+  kafka-topics --bootstrap-server localhost:9092 --list
+```
+
+### Créer un topic
+
+```bash
+kubectl exec -it deploy/kafka -n fleet-dev -- \
+  kafka-topics --bootstrap-server localhost:9092 \
+  --create --topic fleet-events \
+  --partitions 1 --replication-factor 1
+```
+
+### Supprimer un topic
+
+```bash
+kubectl exec -it deploy/kafka -n fleet-dev -- \
+  kafka-topics --bootstrap-server localhost:9092 \
+  --delete --topic fleet-events
+```
+
+---
+
+## Test bout en bout
+
+### Terminal 1 — Consommateur
+
+```bash
+kubectl exec -it deploy/kafka -n fleet-dev -- \
+  kafka-console-consumer --bootstrap-server localhost:9092 \
+  --topic fleet-events --from-beginning
+```
+
+### Terminal 2 — Producteur
+
+```bash
+kubectl exec -it deploy/kafka -n fleet-dev -- \
+  kafka-console-producer --bootstrap-server localhost:9092 \
+  --topic fleet-events
+```
+
+Exemples de messages à envoyer :
+
+```json
+{"vehicleId":"VH-001","status":"moving","speed":90}
+{"vehicleId":"VH-002","status":"stopped","speed":0}
+```
+
+---
+
+## Accès depuis l'extérieur du cluster (dev local)
+
+```bash
+kubectl port-forward deploy/kafka 9092:9092 -n fleet-dev
+```
+
+Dans `application.yml` (Spring Boot) :
+
+```yaml
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      group-id: fleet-consumer-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+```
+
+
+
+## Debug
+
+```bash
+# Logs du pod Kafka
+kubectl logs deploy/kafka -n fleet-dev
+
+# Inspecter un consumer group
+kubectl exec -it deploy/kafka -n fleet-dev -- \
+  kafka-consumer-groups --bootstrap-server localhost:9092 \
+  --describe --group fleet-consumer-group
+
+# Voir les offsets d'un topic
+kubectl exec -it deploy/kafka -n fleet-dev -- \
+  kafka-consumer-groups --bootstrap-server localhost:9092 \
+  --group fleet-consumer-group --reset-offsets \
+  --topic fleet-events --to-earliest --dry-run
+```
+
 
 ## Monitoring et visualisation
 
