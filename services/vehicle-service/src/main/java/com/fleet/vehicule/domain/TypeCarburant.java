@@ -1,4 +1,9 @@
 package com.fleet.vehicule.domain;
 
-public class TypeCarburant {
+public enum TypeCarburant {
+    ESSENCE,
+    DIESEL,
+    ELECTRIQUE,
+    HYBRIDE,
+    GPL
 }

@@ -1,4 +1,10 @@
 package com.fleet.vehicule.exception;
 
-public class VehiculeNotFoundException {
+import java.util.UUID;
+
+
+public class VehiculeNotFoundException extends RuntimeException {
+    public VehiculeNotFoundException(UUID id) {
+        super("Véhicule introuvable : " + id);
+    }
 }

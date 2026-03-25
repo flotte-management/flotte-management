@@ -1,17 +1,29 @@
 server:
   port: 8080 
 
+app:
+  security:
+    enabled: false
+
 spring:
   application:
     name: vehicle-service
-  
+
   datasource:
   
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/fleet}
-    username: ${SPRING_DATASOURCE_USERNAME:user}
-    password: ${SPRING_DATASOURCE_PASSWORD:password}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/vehicles_db}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:secret}
 
   jpa:
     hibernate:
       ddl-auto: update 
-    show-sql: true    
+    show-sql: true
+  kafka:
+    bootstrap-servers: localhost:9092
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
