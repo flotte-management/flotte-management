@@ -98,9 +98,13 @@ services:
   driver-service:
     build: ./services/driver-service    
     container_name: driver-service
+    working_dir: /app
+    command: >
+      sh -c "python -m alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
     ports:
       - "8000:8000"
     environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:secret@postgres-drivers:5432/drivers_db
       - DEBUG=True
       - SECRET_KEY=dev-secret-key
       - DB_HOST=postgres-drivers
