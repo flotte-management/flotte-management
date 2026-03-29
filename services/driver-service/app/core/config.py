@@ -7,18 +7,18 @@ class Settings(BaseSettings):
 
     # ── PostgreSQL ───────────────────────────────────────────────────────────
     DATABASE_URL: str = (
-        "postgresql+asyncpg://conducteur:secret@localhost:5432/conducteurs_db"
+        "postgresql+asyncpg://postgres:secret@localhost:5432/drivers_db"
     )
 
     # ── Keycloak / JWT ───────────────────────────────────────────────────────
     KEYCLOAK_URL: str = "http://keycloak:8080"
     KEYCLOAK_REALM: str = "fleet"
-    KEYCLOAK_CLIENT_ID: str = "service-conducteurs"
+    KEYCLOAK_CLIENT_ID: str = "service-drivers"
     KEYCLOAK_CLIENT_SECRET: str = "changeme"
 
     # ── Kafka ────────────────────────────────────────────────────────────────
     KAFKA_BOOTSTRAP_SERVERS: str = "kafka:9092"
-    KAFKA_TOPIC_CONDUCTEUR: str = "conducteur-events"
+    KAFKA_TOPIC_DRIVER: str = "driver-events"
 
     # ── App ──────────────────────────────────────────────────────────────────
     APP_ENV: str = "development"

@@ -1,6 +1,6 @@
 """
 Modèles SQLAlchemy correspondant à l'ERD :
-  • conducteurs
+  • drivers
   • permis
   • assignations
 """
@@ -25,7 +25,7 @@ from app.db.session import Base
 
 # ── Enum ──────────────────────────────────────────────────────────────────────
 
-class StatutConducteur(str, enum.Enum):
+class StatutDriver(str, enum.Enum):
     actif = "actif"
     inactif = "inactif"
     suspendu = "suspendu"
@@ -33,8 +33,8 @@ class StatutConducteur(str, enum.Enum):
 
 # ── Tables ────────────────────────────────────────────────────────────────────
 
-class Conducteur(Base):
-    __tablename__ = "conducteurs"
+class Driver(Base):
+    __tablename__ = "drivers"
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
@@ -43,10 +43,10 @@ class Conducteur(Base):
     prenom: Mapped[str] = mapped_column(String(50), nullable=False)
     email: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     telephone: Mapped[str | None] = mapped_column(String(20))
-    statut: Mapped[StatutConducteur] = mapped_column(
-        Enum(StatutConducteur, name="statut_conducteur"),
+    statut: Mapped[StatutDriver] = mapped_column(
+        Enum(StatutDriver, name="statut_driver"),
         nullable=False,
-        default=StatutConducteur.actif,
+        default=StatutDriver.actif,
     )
     date_naissance: Mapped[date | None] = mapped_column(Date)
     created_at: Mapped[datetime] = mapped_column(
@@ -61,10 +61,10 @@ class Conducteur(Base):
 
     # Relations
     permis: Mapped[list["Permis"]] = relationship(
-        back_populates="conducteur", cascade="all, delete-orphan", lazy="select"
+        back_populates="driver", cascade="all, delete-orphan", lazy="select"
     )
     assignations: Mapped[list["Assignation"]] = relationship(
-        back_populates="conducteur", cascade="all, delete-orphan", lazy="select"
+        back_populates="driver", cascade="all, delete-orphan", lazy="select"
     )
 
 
@@ -74,9 +74,9 @@ class Permis(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
-    conducteur_id: Mapped[uuid.UUID] = mapped_column(
+    driver_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("conducteurs.id", ondelete="CASCADE"),
+        ForeignKey("drivers.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -85,7 +85,7 @@ class Permis(Base):
     date_delivrance: Mapped[date] = mapped_column(Date, nullable=False)
     date_expiration: Mapped[date] = mapped_column(Date, nullable=False)
 
-    conducteur: Mapped["Conducteur"] = relationship(back_populates="permis")
+    driver: Mapped["Driver"] = relationship(back_populates="permis")
 
 
 class Assignation(Base):
@@ -94,9 +94,9 @@ class Assignation(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
-    conducteur_id: Mapped[uuid.UUID] = mapped_column(
+    driver_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("conducteurs.id", ondelete="CASCADE"),
+        ForeignKey("drivers.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
@@ -109,4 +109,4 @@ class Assignation(Base):
     date_fin: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     statut: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
 
-    conducteur: Mapped["Conducteur"] = relationship(back_populates="assignations")
+    driver: Mapped["Driver"] = relationship(back_populates="assignations")

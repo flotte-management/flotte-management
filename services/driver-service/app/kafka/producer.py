@@ -2,12 +2,12 @@
 Producteur Kafka asynchrone.
 
 Événements émis () :
-  conducteur.created
-  conducteur.updated
-  conducteur.statut_changed
-  conducteur.deleted
-  conducteur.permis_added
-  conducteur.assigned
+  driver.created
+  driver.updated
+  driver.statut_changed
+  driver.deleted
+  driver.permis_added
+  driver.assigned
 """
 
 from __future__ import annotations
@@ -67,14 +67,14 @@ async def _emit(event_type: str, payload: dict[str, Any]) -> None:
         "event_id": str(uuid.uuid4()),
         "event_type": event_type,
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "source": "service-conducteurs",
+        "source": "service-drivers",
         "payload": payload,
     }
     try:
         await _producer.send_and_wait(
-            settings.KAFKA_TOPIC_CONDUCTEUR,
+            settings.KAFKA_TOPIC_DRIVER,
             value=envelope,
-            key=str(payload.get("conducteur_id", "")).encode(),
+            key=str(payload.get("driver_id", "")).encode(),
         )
         logger.debug("Événement émis : %s", event_type)
     except Exception as exc:
@@ -84,49 +84,49 @@ async def _emit(event_type: str, payload: dict[str, Any]) -> None:
 
 # ── API publique ──────────────────────────────────────────────────────────────
 
-async def emit_conducteur_created(conducteur_id: str, data: dict[str, Any]) -> None:
-    await _emit("conducteur.created", {"conducteur_id": conducteur_id, **data})
+async def emit_driver_created(driver_id: str, data: dict[str, Any]) -> None:
+    await _emit("driver.created", {"driver_id": driver_id, **data})
 
 
-async def emit_conducteur_updated(conducteur_id: str, changes: dict[str, Any]) -> None:
-    await _emit("conducteur.updated", {"conducteur_id": conducteur_id, "changes": changes})
+async def emit_driver_updated(driver_id: str, changes: dict[str, Any]) -> None:
+    await _emit("driver.updated", {"driver_id": driver_id, "changes": changes})
 
 
-async def emit_conducteur_statut_changed(
-    conducteur_id: str, old_statut: str, new_statut: str
+async def emit_driver_statut_changed(
+    driver_id: str, old_statut: str, new_statut: str
 ) -> None:
     await _emit(
-        "conducteur.statut_changed",
+        "driver.statut_changed",
         {
-            "conducteur_id": conducteur_id,
+            "driver_id": driver_id,
             "old_statut": old_statut,
             "new_statut": new_statut,
         },
     )
 
 
-async def emit_conducteur_deleted(conducteur_id: str) -> None:
-    await _emit("conducteur.deleted", {"conducteur_id": conducteur_id})
+async def emit_driver_deleted(driver_id: str) -> None:
+    await _emit("driver.deleted", {"driver_id": driver_id})
 
 
-async def emit_permis_added(conducteur_id: str, permis_id: str, categorie: str) -> None:
+async def emit_permis_added(driver_id: str, permis_id: str, categorie: str) -> None:
     await _emit(
-        "conducteur.permis_added",
+        "driver.permis_added",
         {
-            "conducteur_id": conducteur_id,
+            "driver_id": driver_id,
             "permis_id": permis_id,
             "categorie": categorie,
         },
     )
 
 
-async def emit_conducteur_assigned(
-    conducteur_id: str, vehicule_id: str, assignation_id: str
+async def emit_driver_assigned(
+    driver_id: str, vehicule_id: str, assignation_id: str
 ) -> None:
     await _emit(
-        "conducteur.assigned",
+        "driver.assigned",
         {
-            "conducteur_id": conducteur_id,
+            "driver_id": driver_id,
             "vehicule_id": vehicule_id,
             "assignation_id": assignation_id,
         },

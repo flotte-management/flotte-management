@@ -25,9 +25,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Service Conducteurs",
+    title="Service Drivers",
     description=(
-        "Microservice de gestion des conducteurs, permis et assignations "
+        "Microservice de gestion des drivers, permis et assignations "
         "de la flotte automobile."
     ),
     version="1.0.0",
@@ -53,4 +53,4 @@ app.include_router(api_router)
 # ── Health check ──────────────────────────────────────────────────────────────
 @app.get("/health", tags=["Health"])
 async def health():
-    return {"status": "ok", "service": "service-conducteurs"}
+    return {"status": "ok", "service": "service-drivers"}

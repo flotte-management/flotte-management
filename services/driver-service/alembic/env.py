@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 # Importer les modèles pour que leurs métadonnées soient connues d'Alembic
 from app.db.session import Base
-from app.models.conducteur import Assignation, Conducteur, Permis  # noqa: F401
+from app.models.driver import Assignation, Driver, Permis  # noqa: F401
 from app.core.config import get_settings
 
 settings = get_settings()

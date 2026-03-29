@@ -11,96 +11,96 @@ from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.conducteur import Assignation, Conducteur, Permis, StatutConducteur
-from app.schemas.conducteur import (
+from app.models.driver import Assignation, Driver, Permis, StatutDriver
+from app.schemas.driver import (
     AssignationCreate,
     AssignationUpdate,
-    ConducteurCreate,
-    ConducteurUpdate,
+    DriverCreate,
+    DriverUpdate,
     PermisCreate,
     PermisUpdate,
 )
 
 
-class ConducteurRepository:
+class DriverRepository:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
-    # ── Conducteurs ────────────────────────────────────────────────────────
+    # ── Drivers ────────────────────────────────────────────────────────
 
     async def get_all(
         self,
         skip: int = 0,
         limit: int = 20,
-        statut: StatutConducteur | None = None,
-    ) -> tuple[list[Conducteur], int]:
-        stmt = select(Conducteur)
-        count_stmt = select(func.count()).select_from(Conducteur)
+        statut: StatutDriver | None = None,
+    ) -> tuple[list[Driver], int]:
+        stmt = select(Driver)
+        count_stmt = select(func.count()).select_from(Driver)
 
         if statut:
-            stmt = stmt.where(Conducteur.statut == statut)
-            count_stmt = count_stmt.where(Conducteur.statut == statut)
+            stmt = stmt.where(Driver.statut == statut)
+            count_stmt = count_stmt.where(Driver.statut == statut)
 
         total: int = (await self.db.execute(count_stmt)).scalar_one()
         rows = (
-            await self.db.execute(stmt.offset(skip).limit(limit).order_by(Conducteur.nom))
+            await self.db.execute(stmt.offset(skip).limit(limit).order_by(Driver.nom))
         ).scalars().all()
         return list(rows), total
 
-    async def get_by_id(self, conducteur_id: uuid.UUID) -> Conducteur | None:
+    async def get_by_id(self, driver_id: uuid.UUID) -> Driver | None:
         stmt = (
-            select(Conducteur)
-            .where(Conducteur.id == conducteur_id)
+            select(Driver)
+            .where(Driver.id == driver_id)
             .options(
-                selectinload(Conducteur.permis),
-                selectinload(Conducteur.assignations),
+                selectinload(Driver.permis),
+                selectinload(Driver.assignations),
             )
         )
         return (await self.db.execute(stmt)).scalars().first()
 
-    async def get_by_email(self, email: str) -> Conducteur | None:
-        stmt = select(Conducteur).where(Conducteur.email == email)
+    async def get_by_email(self, email: str) -> Driver | None:
+        stmt = select(Driver).where(Driver.email == email)
         return (await self.db.execute(stmt)).scalars().first()
 
-    async def create(self, payload: ConducteurCreate) -> Conducteur:
-        conducteur = Conducteur(**payload.model_dump())
-        self.db.add(conducteur)
+    async def create(self, payload: DriverCreate) -> Driver:
+        driver = Driver(**payload.model_dump())
+        self.db.add(driver)
         await self.db.flush()
-        await self.db.refresh(conducteur)
-        return conducteur
+        await self.db.refresh(driver)
+        return driver
 
     async def update(
-        self, conducteur: Conducteur, payload: ConducteurUpdate
-    ) -> Conducteur:
+        self, driver: Driver, payload: DriverUpdate
+    ) -> Driver:
         data = payload.model_dump(exclude_unset=True)
         for field, value in data.items():
-            setattr(conducteur, field, value)
+            setattr(driver, field, value)
         await self.db.flush()
-        await self.db.refresh(conducteur)
-        return conducteur
+        await self.db.refresh(driver)
+        return driver
 
     async def update_statut(
-        self, conducteur_id: uuid.UUID, statut: StatutConducteur
-    ) -> Conducteur | None:
+        self, driver_id: uuid.UUID, statut: StatutDriver
+    ) -> Driver | None:
         stmt = (
-            update(Conducteur)
-            .where(Conducteur.id == conducteur_id)
+            update(Driver)
+            .where(Driver.id == driver_id)
             .values(statut=statut)
-            .returning(Conducteur)
+            .returning(Driver)
         )
         result = (await self.db.execute(stmt)).scalars().first()
         return result
 
-    async def delete(self, conducteur: Conducteur) -> None:
-        await self.db.delete(conducteur)
+    async def delete(self, driver: Driver) -> None:
+        await self.db.delete(driver)
         await self.db.flush()
 
     # ── Permis ─────────────────────────────────────────────────────────────
 
-    async def get_permis_by_conducteur(
-        self, conducteur_id: uuid.UUID
+    async def get_permis_by_driver(
+        self, driver_id: uuid.UUID
     ) -> list[Permis]:
-        stmt = select(Permis).where(Permis.conducteur_id == conducteur_id)
+        stmt = select(Permis).where(Permis.driver_id == driver_id)
         return list((await self.db.execute(stmt)).scalars().all())
 
     async def get_permis_by_id(self, permis_id: uuid.UUID) -> Permis | None:
@@ -108,9 +108,9 @@ class ConducteurRepository:
         return (await self.db.execute(stmt)).scalars().first()
 
     async def create_permis(
-        self, conducteur_id: uuid.UUID, payload: PermisCreate
+        self, driver_id: uuid.UUID, payload: PermisCreate
     ) -> Permis:
-        permis = Permis(conducteur_id=conducteur_id, **payload.model_dump())
+        permis = Permis(driver_id=driver_id, **payload.model_dump())
         self.db.add(permis)
         await self.db.flush()
         await self.db.refresh(permis)
@@ -131,12 +131,12 @@ class ConducteurRepository:
 
     # ── Assignations ────────────────────────────────────────────────────────
 
-    async def get_assignations_by_conducteur(
-        self, conducteur_id: uuid.UUID
+    async def get_assignations_by_driver(
+        self, driver_id: uuid.UUID
     ) -> list[Assignation]:
         stmt = (
             select(Assignation)
-            .where(Assignation.conducteur_id == conducteur_id)
+            .where(Assignation.driver_id == driver_id)
             .order_by(Assignation.date_debut.desc())
         )
         return list((await self.db.execute(stmt)).scalars().all())
@@ -148,19 +148,19 @@ class ConducteurRepository:
         return (await self.db.execute(stmt)).scalars().first()
 
     async def get_active_assignation(
-        self, conducteur_id: uuid.UUID
+        self, driver_id: uuid.UUID
     ) -> Assignation | None:
-        """Retourne l'assignation active d'un conducteur, s'il en a une."""
+        """Retourne l'assignation active d'un driver, s'il en a une."""
         stmt = select(Assignation).where(
-            Assignation.conducteur_id == conducteur_id,
+            Assignation.driver_id == driver_id,
             Assignation.statut == "active",
         )
         return (await self.db.execute(stmt)).scalars().first()
 
     async def create_assignation(
-        self, conducteur_id: uuid.UUID, payload: AssignationCreate
+        self, driver_id: uuid.UUID, payload: AssignationCreate
     ) -> Assignation:
-        assignation = Assignation(conducteur_id=conducteur_id, **payload.model_dump())
+        assignation = Assignation(driver_id=driver_id, **payload.model_dump())
         self.db.add(assignation)
         await self.db.flush()
         await self.db.refresh(assignation)

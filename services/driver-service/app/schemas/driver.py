@@ -1,5 +1,5 @@
 """
-Schémas Pydantic pour les trois entités : Conducteur, Permis, Assignation.
+Schémas Pydantic pour les trois entités : Driver, Permis, Assignation.
 Chaque entité dispose de trois variantes :
   • *Create  – payload entrant (POST)
   • *Update  – payload entrant partiel (PUT/PATCH)
@@ -11,7 +11,7 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-from app.models.conducteur import StatutConducteur
+from app.models.driver import StatutDriver
 
 
 # ── Permis ────────────────────────────────────────────────────────────────────
@@ -34,7 +34,7 @@ class PermisResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
-    conducteur_id: uuid.UUID
+    driver_id: uuid.UUID
     categorie: str
     numero: str
     date_delivrance: date
@@ -59,25 +59,25 @@ class AssignationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
-    conducteur_id: uuid.UUID
+    driver_id: uuid.UUID
     vehicule_id: uuid.UUID
     date_debut: datetime
     date_fin: datetime | None
     statut: str
 
 
-# ── Conducteur ────────────────────────────────────────────────────────────────
+# ── Driver ────────────────────────────────────────────────────────────────
 
-class ConducteurCreate(BaseModel):
+class DriverCreate(BaseModel):
     nom: str = Field(..., max_length=50)
     prenom: str = Field(..., max_length=50)
     email: EmailStr
     telephone: str | None = Field(None, max_length=20)
-    statut: StatutConducteur = StatutConducteur.actif
+    statut: StatutDriver = StatutDriver.actif
     date_naissance: date | None = None
 
 
-class ConducteurUpdate(BaseModel):
+class DriverUpdate(BaseModel):
     nom: str | None = Field(None, max_length=50)
     prenom: str | None = Field(None, max_length=50)
     email: EmailStr | None = None
@@ -85,11 +85,11 @@ class ConducteurUpdate(BaseModel):
     date_naissance: date | None = None
 
 
-class ConducteurStatutUpdate(BaseModel):
-    statut: StatutConducteur
+class DriverStatutUpdate(BaseModel):
+    statut: StatutDriver
 
 
-class ConducteurResponse(BaseModel):
+class DriverResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
@@ -97,14 +97,14 @@ class ConducteurResponse(BaseModel):
     prenom: str
     email: str
     telephone: str | None
-    statut: StatutConducteur
+    statut: StatutDriver
     date_naissance: date | None
     created_at: datetime
     updated_at: datetime
 
 
-class ConducteurDetailResponse(ConducteurResponse):
-    """Conducteur avec ses permis et assignations."""
+class DriverDetailResponse(DriverResponse):
+    """Driver avec ses permis et assignations."""
     permis: list[PermisResponse] = []
     assignations: list[AssignationResponse] = []
 
@@ -115,4 +115,4 @@ class PaginatedResponse(BaseModel):
     total: int
     page: int
     size: int
-    items: list[ConducteurResponse]
+    items: list[DriverResponse]

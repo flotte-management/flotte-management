@@ -1,4 +1,4 @@
-"""Initial schema – conducteurs, permis, assignations
+"""Initial schema – drivers, permis, assignations
 
 Revision ID: 0001
 Revises: 
@@ -18,14 +18,14 @@ depends_on = None
 
 def upgrade() -> None:
     # ── Enum ──────────────────────────────────────────────────────────────────
-    statut_conducteur = postgresql.ENUM(
-        "actif", "inactif", "suspendu", name="statut_conducteur"
+    statut_driver = postgresql.ENUM(
+        "actif", "inactif", "suspendu", name="statut_driver"
     )
-    statut_conducteur.create(op.get_bind(), checkfirst=True)
+    statut_driver.create(op.get_bind(), checkfirst=True)
 
-    # ── conducteurs ───────────────────────────────────────────────────────────
+    # ── drivers ───────────────────────────────────────────────────────────
     op.create_table(
-        "conducteurs",
+        "drivers",
         sa.Column("id", sa.UUID(as_uuid=True), primary_key=True),
         sa.Column("nom", sa.String(50), nullable=False),
         sa.Column("prenom", sa.String(50), nullable=False),
@@ -37,7 +37,7 @@ def upgrade() -> None:
                 "actif",
                 "inactif",
                 "suspendu",
-                name="statut_conducteur",
+                name="statut_driver",
                 create_type=False,
             ),
             nullable=False,
@@ -57,16 +57,16 @@ def upgrade() -> None:
             server_default=sa.text("now()"),
         ),
     )
-    op.create_index("ix_conducteurs_email", "conducteurs", ["email"], unique=True)
+    op.create_index("ix_drivers_email", "drivers", ["email"], unique=True)
 
     # ── permis ────────────────────────────────────────────────────────────────
     op.create_table(
         "permis",
         sa.Column("id", sa.UUID(as_uuid=True), primary_key=True),
         sa.Column(
-            "conducteur_id",
+            "driver_id",
             sa.UUID(as_uuid=True),
-            sa.ForeignKey("conducteurs.id", ondelete="CASCADE"),
+            sa.ForeignKey("drivers.id", ondelete="CASCADE"),
             nullable=False,
         ),
         sa.Column("categorie", sa.String(5), nullable=False),
@@ -74,7 +74,7 @@ def upgrade() -> None:
         sa.Column("date_delivrance", sa.Date, nullable=False),
         sa.Column("date_expiration", sa.Date, nullable=False),
     )
-    op.create_index("ix_permis_conducteur_id", "permis", ["conducteur_id"])
+    op.create_index("ix_permis_driver_id", "permis", ["driver_id"])
     op.create_index("ix_permis_numero", "permis", ["numero"], unique=True)
 
     # ── assignations ──────────────────────────────────────────────────────────
@@ -82,9 +82,9 @@ def upgrade() -> None:
         "assignations",
         sa.Column("id", sa.UUID(as_uuid=True), primary_key=True),
         sa.Column(
-            "conducteur_id",
+            "driver_id",
             sa.UUID(as_uuid=True),
-            sa.ForeignKey("conducteurs.id", ondelete="CASCADE"),
+            sa.ForeignKey("drivers.id", ondelete="CASCADE"),
             nullable=False,
         ),
         sa.Column("vehicule_id", sa.UUID(as_uuid=True), nullable=False),
@@ -92,7 +92,7 @@ def upgrade() -> None:
         sa.Column("date_fin", sa.DateTime(timezone=True), nullable=True),
         sa.Column("statut", sa.String(20), nullable=False, server_default="active"),
     )
-    op.create_index("ix_assignations_conducteur_id", "assignations", ["conducteur_id"])
+    op.create_index("ix_assignations_driver_id", "assignations", ["driver_id"])
     op.create_index("ix_assignations_vehicule_id", "assignations", ["vehicule_id"])
 
     # Trigger updated_at auto (PostgreSQL)
@@ -109,17 +109,17 @@ def upgrade() -> None:
     )
     op.execute(
         """
-        CREATE TRIGGER trg_conducteurs_updated_at
-        BEFORE UPDATE ON conducteurs
+        CREATE TRIGGER trg_drivers_updated_at
+        BEFORE UPDATE ON drivers
         FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
         """
     )
 
 
 def downgrade() -> None:
-    op.execute("DROP TRIGGER IF EXISTS trg_conducteurs_updated_at ON conducteurs")
+    op.execute("DROP TRIGGER IF EXISTS trg_drivers_updated_at ON drivers")
     op.execute("DROP FUNCTION IF EXISTS update_updated_at_column()")
     op.drop_table("assignations")
     op.drop_table("permis")
-    op.drop_table("conducteurs")
-    op.execute("DROP TYPE IF EXISTS statut_conducteur")
+    op.drop_table("drivers")
+    op.execute("DROP TYPE IF EXISTS statut_driver")
