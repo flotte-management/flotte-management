@@ -26,7 +26,7 @@ COPY --chown=appuser:appgroup . .
 
 USER appuser
 
-EXPOSE 8001
+EXPOSE 8000
 
 # Uvicorn remplace Gunicorn pour FastAPI
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
