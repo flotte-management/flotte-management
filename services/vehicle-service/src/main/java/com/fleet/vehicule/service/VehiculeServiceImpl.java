@@ -2,8 +2,9 @@ package com.fleet.vehicule.service;
 
 import com.fleet.vehicule.domain.*;
 import com.fleet.vehicule.dto.VehiculeDTO;
-import com.fleet.vehicule.exception.VehiculeNotFoundException;
 import com.fleet.vehicule.exception.ImmatriculationAlreadyExistsException;
+import com.fleet.vehicule.exception.InvalidVehiculeRequestException;
+import com.fleet.vehicule.exception.VehiculeNotFoundException;
 // import com.fleet.vehicule.kafka.KafkaVehiculeProducer;
 import com.fleet.vehicule.repository.HistoriqueStatutRepository;
 import com.fleet.vehicule.repository.VehiculeRepository;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -31,14 +33,15 @@ public class VehiculeServiceImpl implements VehiculeService {
 
     @Override
     public VehiculeDTO.Response creer(VehiculeDTO.CreateRequest req) {
-        if (vehiculeRepository.existsByImmatriculation(req.getImmatriculation())) {
-            throw new ImmatriculationAlreadyExistsException(req.getImmatriculation());
+        String immatriculation = normalizeImmatriculation(req.getImmatriculation());
+        if (vehiculeRepository.existsByImmatriculationIgnoreCase(immatriculation)) {
+            throw new ImmatriculationAlreadyExistsException(immatriculation);
         }
 
         Vehicule vehicule = Vehicule.builder()
-                .immatriculation(req.getImmatriculation().toUpperCase())
-                .marque(req.getMarque())
-                .modele(req.getModele())
+                .immatriculation(immatriculation)
+                .marque(normalizeText(req.getMarque()))
+                .modele(normalizeText(req.getModele()))
                 .annee(req.getAnnee())
                 .typeCarburant(req.getTypeCarburant())
                 .build();
@@ -54,14 +57,15 @@ public class VehiculeServiceImpl implements VehiculeService {
     @Transactional(readOnly = true)
     public VehiculeDTO.PageResponse<VehiculeDTO.Response> lister(
             StatutVehicule statut, String marque, Pageable pageable) {
+        String normalizedMarque = normalizeFilter(marque);
 
         Page<Vehicule> page;
-        if (statut != null && marque != null) {
-            page = vehiculeRepository.findByStatutAndMarqueContainingIgnoreCase(statut, marque, pageable);
+        if (statut != null && normalizedMarque != null) {
+            page = vehiculeRepository.findByStatutAndMarqueContainingIgnoreCase(statut, normalizedMarque, pageable);
         } else if (statut != null) {
             page = vehiculeRepository.findByStatut(statut, pageable);
-        } else if (marque != null) {
-            page = vehiculeRepository.findByMarqueContainingIgnoreCase(marque, pageable);
+        } else if (normalizedMarque != null) {
+            page = vehiculeRepository.findByMarqueContainingIgnoreCase(normalizedMarque, pageable);
         } else {
             page = vehiculeRepository.findAll(pageable);
         }
@@ -79,8 +83,8 @@ public class VehiculeServiceImpl implements VehiculeService {
     public VehiculeDTO.Response modifier(UUID id, VehiculeDTO.UpdateRequest req) {
         Vehicule vehicule = getOrThrow(id);
 
-        if (req.getMarque() != null) vehicule.setMarque(req.getMarque());
-        if (req.getModele() != null) vehicule.setModele(req.getModele());
+        if (req.getMarque() != null) vehicule.setMarque(normalizeUpdatableText("marque", req.getMarque()));
+        if (req.getModele() != null) vehicule.setModele(normalizeUpdatableText("modele", req.getModele()));
         if (req.getAnnee() != null) vehicule.setAnnee(req.getAnnee());
         if (req.getTypeCarburant() != null) vehicule.setTypeCarburant(req.getTypeCarburant());
         if (req.getKilometrage() != null) vehicule.setKilometrage(req.getKilometrage());
@@ -104,6 +108,9 @@ public class VehiculeServiceImpl implements VehiculeService {
     public VehiculeDTO.Response changerStatut(UUID id, VehiculeDTO.StatutRequest req, UUID modifiePar) {
         Vehicule vehicule = getOrThrow(id);
         StatutVehicule ancien = vehicule.getStatut();
+        if (ancien == req.getStatut()) {
+            throw new InvalidVehiculeRequestException("Le statut demande est identique au statut actuel");
+        }
 
         vehicule.setStatut(req.getStatut());
         vehicule = vehiculeRepository.save(vehicule);
@@ -112,7 +119,7 @@ public class VehiculeServiceImpl implements VehiculeService {
                 .vehicule(vehicule)
                 .statutAvant(ancien)
                 .statutApres(req.getStatut())
-                .motif(req.getMotif())
+                .motif(normalizeFilter(req.getMotif()))
                 .modifiePar(modifiePar)
                 .build();
         historiqueRepository.save(historique);
@@ -135,8 +142,28 @@ public class VehiculeServiceImpl implements VehiculeService {
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
     private Vehicule getOrThrow(UUID id) {
-        return vehiculeRepository.findById(id)
+        return vehiculeRepository.findByIdAndDeletedAtIsNull(id)
                 .orElseThrow(() -> new VehiculeNotFoundException(id));
+    }
+
+    private String normalizeImmatriculation(String immatriculation) {
+        return normalizeText(immatriculation).toUpperCase();
+    }
+
+    private String normalizeText(String value) {
+        return value.trim();
+    }
+
+    private String normalizeUpdatableText(String fieldName, String value) {
+        String normalized = normalizeFilter(value);
+        if (normalized == null) {
+            throw new InvalidVehiculeRequestException("Le champ " + fieldName + " ne peut pas être vide");
+        }
+        return normalized;
+    }
+
+    private String normalizeFilter(String value) {
+        return StringUtils.hasText(value) ? value.trim() : null;
     }
 
     private VehiculeDTO.Response toResponse(Vehicule v) {

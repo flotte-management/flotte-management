@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -22,5 +23,7 @@ public interface VehiculeRepository extends JpaRepository<Vehicule, UUID> {
     Page<Vehicule> findByStatutAndMarqueContainingIgnoreCase(
             StatutVehicule statut, String marque, Pageable pageable);
 
-    boolean existsByImmatriculation(String immatriculation);
+    Optional<Vehicule> findByIdAndDeletedAtIsNull(UUID id);
+
+    boolean existsByImmatriculationIgnoreCase(String immatriculation);
 }

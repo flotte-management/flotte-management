@@ -4,6 +4,9 @@ import com.fleet.vehicule.domain.StatutVehicule;
 import com.fleet.vehicule.dto.VehiculeDTO;
 import com.fleet.vehicule.service.VehiculeService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -11,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -18,6 +22,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/vehicules")
 @RequiredArgsConstructor
+@Validated
 public class VehiculeController {
 
     private static final UUID SYSTEM_ACTOR_ID = UUID.fromString("00000000-0000-0000-0000-000000000000");
@@ -32,8 +37,8 @@ public class VehiculeController {
     public ResponseEntity<VehiculeDTO.PageResponse<VehiculeDTO.Response>> lister(
             @RequestParam(required = false) StatutVehicule statut,
             @RequestParam(required = false) String marque,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "0") @PositiveOrZero int page,
+            @RequestParam(defaultValue = "20") @Positive @Max(100) int size) {
 
         PageRequest pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         return ResponseEntity.ok(vehiculeService.lister(statut, marque, pageable));
@@ -102,8 +107,8 @@ public class VehiculeController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<VehiculeDTO.PageResponse<VehiculeDTO.HistoriqueResponse>> historique(
             @PathVariable UUID id,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "0") @PositiveOrZero int page,
+            @RequestParam(defaultValue = "20") @Positive @Max(100) int size) {
 
         PageRequest pageable = PageRequest.of(page, size);
         return ResponseEntity.ok(vehiculeService.historique(id, pageable));
