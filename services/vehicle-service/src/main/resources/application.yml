@@ -8,7 +8,8 @@ app:
 spring:
   application:
     name: vehicle-service
-
+  kafka:
+    bootstrap-servers: localhost:9092
   datasource:
   
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/vehicles_db}
