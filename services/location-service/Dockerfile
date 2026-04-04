@@ -29,5 +29,6 @@ COPY --from=builder --chown=appuser:appgroup /app/dist ./dist
 USER appuser
 
 EXPOSE 3000
+EXPOSE 3001
 
 CMD ["node", "dist/main"]

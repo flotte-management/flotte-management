@@ -1,8 +1,60 @@
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { existsSync } from 'fs';
+import { join } from 'path';
 import { AppModule } from './app.module';
+import { AppConfigService } from './config/app-config.service';
+
+function resolveProtoPath(): string {
+  const candidates = [
+    join(__dirname, 'proto/location.proto'),
+    join(__dirname, 'proto/proto/location.proto'),
+    join(process.cwd(), 'src/proto/location.proto'),
+  ];
+
+  const resolvedPath = candidates.find((candidate) => existsSync(candidate));
+  if (!resolvedPath) {
+    throw new Error(
+      `Unable to locate location.proto. Checked: ${candidates.join(', ')}`,
+    );
+  }
+
+  return resolvedPath;
+}
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  await app.listen(process.env.PORT ?? 3000);
+  const config = app.get(AppConfigService);
+  const protoPath = resolveProtoPath();
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
+  app.enableShutdownHooks();
+
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.GRPC,
+    options: {
+      url: `0.0.0.0:${config.grpcPort}`,
+      package: 'location.v1',
+      protoPath,
+      loader: {
+        keepCase: false,
+        longs: String,
+        enums: String,
+        defaults: true,
+        oneofs: true,
+      },
+    },
+  });
+
+  await app.startAllMicroservices();
+  await app.listen(config.httpPort);
 }
-bootstrap();
+
+void bootstrap();

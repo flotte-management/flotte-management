@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package location.v1;
+
+service LocationStreamingService {
+  rpc StreamVehiclePositions (StreamVehiclePositionsRequest) returns (stream PositionMessage);
+}
+
+message StreamVehiclePositionsRequest {
+  string vehiculeId = 1;
+}
+
+message PositionMessage {
+  string vehiculeId = 1;
+  string time = 2;
+  double latitude = 3;
+  double longitude = 4;
+  double vitesse = 5;
+  double cap = 6;
+  double precision = 7;
+}
