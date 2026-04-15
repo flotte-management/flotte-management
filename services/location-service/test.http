@@ -1,0 +1,150 @@
+@baseUrl = http://localhost:3003
+@vehicleId = VH-001
+@from = 2026-04-03T08:00:00Z
+@to = 2026-04-03T12:00:00Z
+
+### Health
+GET {{baseUrl}}/health
+
+### Root health
+GET {{baseUrl}}/
+
+### Latest position before any ingestion
+GET {{baseUrl}}/localisation/{{vehicleId}}/position
+
+### Create geofencing zone
+POST {{baseUrl}}/localisation/zones
+Content-Type: application/json
+
+{
+  "nom": "Depot Rouen",
+  "type": "DEPOT",
+  "actif": true,
+  "coordinates": [
+    { "latitude": 49.44310, "longitude": 1.09010 },
+    { "latitude": 49.44420, "longitude": 1.10210 },
+    { "latitude": 49.43820, "longitude": 1.10120 }
+  ]
+}
+
+### List zones
+GET {{baseUrl}}/localisation/zones
+
+### Copy the created id from the previous response and paste it here
+@zoneId = 82b07e32-1ad1-4582-a329-22fa2dbbbc19
+
+### Update geofencing zone
+PUT {{baseUrl}}/localisation/zones/{{zoneId}}
+Content-Type: application/json
+
+{
+  "nom": "Depot Rouen Principal",
+  "type": "DEPOT",
+  "actif": true,
+  "coordinates": [
+    { "latitude": 49.44310, "longitude": 1.09010 },
+    { "latitude": 49.44450, "longitude": 1.10240 },
+    { "latitude": 49.43780, "longitude": 1.10140 }
+  ]
+}
+
+### Ingest GPS point outside the zone
+POST {{baseUrl}}/localisation/positions
+Content-Type: application/json
+
+{
+  "vehiculeId": "{{vehicleId}}",
+  "latitude": 49.44650,
+  "longitude": 1.10800,
+  "vitesse": 32.5,
+  "cap": 210,
+  "precision": 5.2,
+  "time": "2026-04-03T09:00:00Z",
+  "correlationId": "test-sequence-1"
+}
+
+### Ingest GPS point inside the zone to trigger ENTER
+POST {{baseUrl}}/localisation/positions
+Content-Type: application/json
+
+{
+  "vehiculeId": "{{vehicleId}}",
+  "latitude": 49.44210,
+  "longitude": 1.09700,
+  "vitesse": 18.0,
+  "cap": 180,
+  "precision": 4.0,
+  "time": "2026-04-03T09:05:00Z",
+  "correlationId": "test-sequence-2"
+}
+
+### Ingest another point inside the zone: should not create a duplicate alert
+POST {{baseUrl}}/localisation/positions
+Content-Type: application/json
+
+{
+  "vehiculeId": "{{vehicleId}}",
+  "latitude": 49.44150,
+  "longitude": 1.09820,
+  "vitesse": 14.0,
+  "cap": 175,
+  "precision": 4.1,
+  "time": "2026-04-03T09:07:00Z",
+  "correlationId": "test-sequence-3"
+}
+
+### Ingest GPS point outside the zone to trigger EXIT
+POST {{baseUrl}}/localisation/positions
+Content-Type: application/json
+
+{
+  "vehiculeId": "{{vehicleId}}",
+  "latitude": 49.44720,
+  "longitude": 1.10950,
+  "vitesse": 28.0,
+  "cap": 30,
+  "precision": 5.0,
+  "time": "2026-04-03T09:12:00Z",
+  "correlationId": "test-sequence-4"
+}
+
+### Get latest known position
+GET {{baseUrl}}/localisation/{{vehicleId}}/position
+
+### Get vehicle history
+GET {{baseUrl}}/localisation/{{vehicleId}}/historique?from={{from}}&to={{to}}
+
+### Get recent alerts
+GET {{baseUrl}}/localisation/alertes
+
+### Get recent alerts filtered by vehicle
+GET {{baseUrl}}/localisation/alertes?page=1&limit=10&vehiculeId={{vehicleId}}
+
+### Get recent alerts filtered by zone
+GET {{baseUrl}}/localisation/alertes?page=1&limit=10&zoneId={{zoneId}}
+
+### Get recent alerts filtered by alert type
+GET {{baseUrl}}/localisation/alertes?page=1&limit=10&vehiculeId={{vehicleId}}&typeAlerte=ENTER
+
+### Vehicle analysis
+GET {{baseUrl}}/localisation/{{vehicleId}}/analyse?from={{from}}&to={{to}}
+
+### Validation test: invalid history range
+GET {{baseUrl}}/localisation/{{vehicleId}}/historique?from=2026-04-03T12:00:00Z&to=2026-04-03T08:00:00Z
+
+### Validation test: invalid GPS payload
+POST {{baseUrl}}/localisation/positions
+Content-Type: application/json
+
+{
+  "vehiculeId": "{{vehicleId}}",
+  "latitude": 120,
+  "longitude": 1.09700,
+  "vitesse": 18.0,
+  "cap": 400,
+  "precision": 4.0,
+  "time": "2026-04-03T09:15:00Z"
+}
+
+### Delete zone
+DELETE {{baseUrl}}/localisation/zones/{{zoneId}}
