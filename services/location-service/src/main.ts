@@ -5,6 +5,7 @@ import { existsSync } from 'fs';
 import { join } from 'path';
 import { AppModule } from './app.module';
 import { AppConfigService } from './config/app-config.service';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 function resolveProtoPath(): string {
   const candidates = [
@@ -54,6 +55,12 @@ async function bootstrap() {
   });
 
   await app.startAllMicroservices();
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('Location Service')
+    .setVersion('1.0')
+    .build();
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('api', app, document);
   await app.listen(config.httpPort);
 }
 
