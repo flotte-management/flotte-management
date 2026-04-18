@@ -1,0 +1,19 @@
+export enum StatutMission {
+  PLANIFIEE = 'PLANIFIEE',
+  EN_COURS = 'EN_COURS',
+  TERMINEE = 'TERMINEE',
+  ANNULEE = 'ANNULEE',
+}
+
+export enum StatutEtape {
+  EN_ATTENTE = 'EN_ATTENTE',
+  ATTEINTE = 'ATTEINTE',
+  IGNOREE = 'IGNOREE',
+}
+
+export enum Role {
+  ADMIN = 'ADMIN',
+  MANAGER = 'MANAGER',
+  TECHNICIEN = 'TECHNICIEN',
+  UTILISATEUR = 'UTILISATEUR',
+}

@@ -1,0 +1,254 @@
+{
+  "info": {
+    "name": "Service Missions — Gestion de Flotte",
+    "description": "Collection Postman pour le microservice Missions (NestJS — port 3005).\n\n## Setup\n1. Importer cette collection dans Postman\n2. Créer un environment `flotte-local` avec les variables ci-dessous\n3. Obtenir un JWT depuis Keycloak et le placer dans `jwt_token`\n\n## Variables d'environnement recommandées\n| Variable | Valeur |\n|---|---|\n| `base_url` | `http://localhost:3005/api/v1` |\n| `jwt_token` | *votre token Keycloak* |\n| `mission_id` | *id créé lors des tests* |\n| `etape_id` | *id d'étape créé lors des tests* |",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url",    "value": "http://localhost:3005/api/v1",  "type": "string" },
+    { "key": "jwt_token",   "value": "REPLACE_WITH_YOUR_JWT",         "type": "string" },
+    { "key": "mission_id",  "value": "d0e1f2a3-eeee-5678-9abc-def012345678", "type": "string" },
+    { "key": "etape_id",    "value": "",                              "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{jwt_token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "http://localhost:3005/health", "host": ["localhost"], "port": "3005", "path": ["health"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Missions",
+      "item": [
+        {
+          "name": "Lister les missions",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/missions?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["missions"],
+              "query": [
+                { "key": "page",         "value": "1" },
+                { "key": "limit",        "value": "20" },
+                { "key": "statut",       "value": "PLANIFIEE", "disabled": true },
+                { "key": "conducteurId", "value": "f1e2d3c4-b5a6-9870-fedc-ba9876543210", "disabled": true },
+                { "key": "vehiculeId",   "value": "a1b2c3d4-e5f6-7890-abcd-ef1234567890", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Créer une mission",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('mission_id', body.id);",
+                  "  console.log('mission_id sauvegardé :', body.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titre\": \"Livraison Rouen → Le Havre\",\n  \"vehiculeId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"conducteurId\": \"f1e2d3c4-b5a6-9870-fedc-ba9876543210\",\n  \"dateDebutPrevue\": \"2026-04-20T08:00:00.000Z\",\n  \"dateFinPrevue\": \"2026-04-20T11:00:00.000Z\",\n  \"adresseOrigine\": \"15 Rue de la République, 76000 Rouen\",\n  \"adresseDestination\": \"Port du Havre, 76600 Le Havre\",\n  \"distanceEstimeeKm\": 87.4,\n  \"notes\": \"Livraison urgente — priorité haute\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/missions", "host": ["{{base_url}}"], "path": ["missions"] }
+          }
+        },
+        {
+          "name": "Détail d'une mission",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/missions/{{mission_id}}", "host": ["{{base_url}}"], "path": ["missions", "{{mission_id}}"] }
+          }
+        },
+        {
+          "name": "Modifier une mission (PLANIFIEE)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titre\": \"Livraison Express Rouen → Le Havre\",\n  \"distanceEstimeeKm\": 90.0,\n  \"notes\": \"Modifié — créneau avancé\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/missions/{{mission_id}}", "host": ["{{base_url}}"], "path": ["missions", "{{mission_id}}"] }
+          }
+        },
+        {
+          "name": "Démarrer une mission → EN_COURS",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"statut\": \"EN_COURS\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/missions/{{mission_id}}/statut", "host": ["{{base_url}}"], "path": ["missions", "{{mission_id}}", "statut"] }
+          }
+        },
+        {
+          "name": "Terminer une mission → TERMINEE",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"statut\": \"TERMINEE\",\n  \"distanceReelleKm\": 91.2\n}"
+            },
+            "url": { "raw": "{{base_url}}/missions/{{mission_id}}/statut", "host": ["{{base_url}}"], "path": ["missions", "{{mission_id}}", "statut"] }
+          }
+        },
+        {
+          "name": "Annuler une mission → ANNULEE",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"statut\": \"ANNULEE\",\n  \"motifAnnulation\": \"Véhicule en panne — mission reportée\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/missions/{{mission_id}}/statut", "host": ["{{base_url}}"], "path": ["missions", "{{mission_id}}", "statut"] }
+          }
+        },
+        {
+          "name": "Supprimer (annuler) une mission",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/missions/{{mission_id}}", "host": ["{{base_url}}"], "path": ["missions", "{{mission_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Étapes",
+      "item": [
+        {
+          "name": "Lister les étapes d'une mission",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/missions/{{mission_id}}/etapes", "host": ["{{base_url}}"], "path": ["missions", "{{mission_id}}", "etapes"] }
+          }
+        },
+        {
+          "name": "Ajouter une étape",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('etape_id', body.id);",
+                  "  console.log('etape_id sauvegardé :', body.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ordre\": 1,\n  \"adresse\": \"Zone industrielle de Petit-Quevilly, 76140\",\n  \"latitude\": 49.3976,\n  \"longitude\": 1.0598,\n  \"heurePrevue\": \"2026-04-20T09:00:00.000Z\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/missions/{{mission_id}}/etapes", "host": ["{{base_url}}"], "path": ["missions", "{{mission_id}}", "etapes"] }
+          }
+        },
+        {
+          "name": "Marquer une étape comme atteinte",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"statut\": \"ATTEINTE\",\n  \"heureArrivee\": \"2026-04-20T09:12:00.000Z\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/missions/{{mission_id}}/etapes/{{etape_id}}", "host": ["{{base_url}}"], "path": ["missions", "{{mission_id}}", "etapes", "{{etape_id}}"] }
+          }
+        },
+        {
+          "name": "Ignorer une étape",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"statut\": \"IGNOREE\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/missions/{{mission_id}}/etapes/{{etape_id}}", "host": ["{{base_url}}"], "path": ["missions", "{{mission_id}}", "etapes", "{{etape_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Erreurs / Edge cases",
+      "item": [
+        {
+          "name": "401 — Sans token JWT",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/missions", "host": ["{{base_url}}"], "path": ["missions"] }
+          }
+        },
+        {
+          "name": "404 — Mission inexistante",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/missions/00000000-0000-0000-0000-000000000000", "host": ["{{base_url}}"], "path": ["missions", "00000000-0000-0000-0000-000000000000"] }
+          }
+        },
+        {
+          "name": "400 — Dates incohérentes",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titre\": \"Mission invalide\",\n  \"vehiculeId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"conducteurId\": \"f1e2d3c4-b5a6-9870-fedc-ba9876543210\",\n  \"dateDebutPrevue\": \"2026-04-20T11:00:00.000Z\",\n  \"dateFinPrevue\":   \"2026-04-20T08:00:00.000Z\",\n  \"adresseOrigine\": \"Rouen\",\n  \"adresseDestination\": \"Le Havre\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/missions", "host": ["{{base_url}}"], "path": ["missions"] }
+          }
+        },
+        {
+          "name": "400 — Transition de statut invalide",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"statut\": \"TERMINEE\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/missions/{{mission_id}}/statut",
+              "host": ["{{base_url}}"],
+              "path": ["missions", "{{mission_id}}", "statut"],
+              "description": "Tenter PLANIFIEE → TERMINEE directement (doit échouer)"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
