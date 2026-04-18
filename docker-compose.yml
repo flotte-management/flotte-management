@@ -228,13 +228,14 @@ services:
     build: ./services/mission-service
     container_name: mission-service
     ports:
-      - "3005:3000"
+      - "3005:3005"
     environment:  
       - DB_HOST=postgres-mission
       - DB_PORT=5432
       - DB_NAME=mission_db
       - DB_USER=postgres
       - DB_PASSWORD=secret
+      - KAFKA_ENABLED=false
       - KAFKA_BROKERS=kafka:9092
     depends_on:
       postgres-mission:
