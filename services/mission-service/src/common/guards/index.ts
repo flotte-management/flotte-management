@@ -3,6 +3,7 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
@@ -16,7 +17,74 @@ export class JwtAuthGuard extends AuthGuard('jwt') {}
 /** Vérifie que l'utilisateur possède au moins un des rôles requis. */
 @Injectable()
 export class RolesGuard implements CanActivate {
+  private readonly logger = new Logger(RolesGuard.name);
+
   constructor(private reflector: Reflector) {}
+
+  private normalizeRole(role: string): string {
+    return role.trim().toUpperCase().replace(/^ROLE_/, '');
+  }
+
+  private collectRoles(value: unknown): string[] {
+    if (!value) return [];
+
+    if (Array.isArray(value)) {
+      return value
+        .filter((v): v is string => typeof v === 'string')
+        .map((v) => v.trim())
+        .filter((v) => v.length > 0);
+    }
+
+    if (typeof value === 'string') {
+      return value
+        .split(/[\s,]+/)
+        .map((v) => v.trim())
+        .filter((v) => v.length > 0);
+    }
+
+    return [];
+  }
+
+  private extractRoles(user: any): Set<string> {
+    const realmRoles = this.collectRoles(user?.realm_access?.roles);
+
+    const resourceAccess = (user?.resource_access ?? {}) as Record<
+      string,
+      { roles?: string[] }
+    >;
+    const resourceRoles = Object.values(resourceAccess).flatMap((client) =>
+      this.collectRoles(client?.roles),
+    );
+
+    const rootRoles = this.collectRoles(user?.roles);
+    const groupRoles = this.collectRoles(user?.groups).map(
+      (group) => group.split('/').pop() ?? group,
+    );
+    const scopeRoles = this.collectRoles(user?.scope);
+    const scpRoles = this.collectRoles(user?.scp);
+    const authorities = this.collectRoles(user?.authorities);
+
+    const customClaims = [user?.realm_roles, user?.client_roles].flatMap((claim) =>
+      this.collectRoles(claim),
+    );
+
+    const allRoles = [
+      ...realmRoles,
+      ...resourceRoles,
+      ...rootRoles,
+      ...groupRoles,
+      ...scopeRoles,
+      ...scpRoles,
+      ...authorities,
+      ...customClaims,
+    ];
+
+    return new Set(
+      allRoles
+        .filter((r): r is string => typeof r === 'string' && r.trim().length > 0)
+        .map((r) => this.normalizeRole(r)),
+    );
+  }
 
   canActivate(context: ExecutionContext): boolean {
     const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
@@ -28,9 +96,21 @@ export class RolesGuard implements CanActivate {
     if (!requiredRoles || requiredRoles.length === 0) return true;
 
     const { user } = context.switchToHttp().getRequest();
-    const userRoles: string[] = user?.realm_access?.roles ?? [];
+    const extractedRoles = this.extractRoles(user);
+    const requiredNormalized = requiredRoles.map((r) => this.normalizeRole(r));
 
-    const hasRole = requiredRoles.some((r) => userRoles.includes(r));
+    const hasRole = requiredNormalized.some((requiredRole) =>
+      extractedRoles.has(requiredRole),
+    );
+
+    if (extractedRoles.size === 0) {
+      this.logger.warn(
+        'Aucun rôle extrait du JWT. Vérifiez les mappers Keycloak (realm/client roles) pour ce client.',
+      );
+      const keys = Object.keys(user ?? {}).join(', ');
+      this.logger.warn(`Claims disponibles dans le JWT: ${keys || '(aucune)'}`);
+    }
+    
     if (!hasRole) {
       throw new ForbiddenException(
         `Accès refusé. Rôles requis : ${requiredRoles.join(', ')}`,

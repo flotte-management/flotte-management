@@ -81,6 +81,37 @@ services:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       retries: 5
+  
+  keycloak-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak_secret
+    volumes:
+      - keycloak_db_data:/var/lib/postgresql/data
+  
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    container_name: flotte-keycloak
+    command: start-dev --import-realm   # importe le realm au démarrage
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak_secret
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin123
+      KC_HTTP_PORT: 8080
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+    depends_on:
+      - keycloak-db
 
 
   zookeeper:
@@ -235,6 +266,8 @@ services:
       - DB_NAME=mission_db
       - DB_USER=postgres
       - DB_PASSWORD=secret
+      - DB_SYNCHRONIZE=true
+      - KEYCLOAK_REALM_URL=http://keycloak:8080/realms/flotte-management
       - KAFKA_ENABLED=false
       - KAFKA_BROKERS=kafka:9092
     depends_on:
@@ -242,6 +275,8 @@ services:
         condition: service_healthy
      # kafka:
       #  condition: service_started
+    env_file:
+      - ./services/mission-service/.env
 
 volumes:
   pgdata_vehicles:
@@ -249,3 +284,4 @@ volumes:
   pgdata_location:
   pgdata_maintenance:
   pgdata_mission:
+  keycloak_db_data:

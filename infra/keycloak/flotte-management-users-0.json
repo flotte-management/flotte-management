@@ -1,0 +1,98 @@
+{
+  "realm" : "flotte-management",
+  "users" : [ {
+    "id" : "4a18b2d1-54b7-4529-8185-85971c867282",
+    "username" : "admin.flotte",
+    "emailVerified" : false,
+    "createdTimestamp" : 1776513604885,
+    "enabled" : true,
+    "totp" : false,
+    "credentials" : [ {
+      "id" : "c7be2a1a-56f5-48fb-92b6-51d0e26b41e7",
+      "type" : "password",
+      "userLabel" : "My password",
+      "createdDate" : 1776513676684,
+      "secretData" : "{\"value\":\"9kybL9FYbfpWsf314lS1WLZunY47SBzJ/587iTJyfycHZYFjFvT5cGsn/lJ1xZPoIOGeYL6JuDW3iPYdGgPT1w==\",\"salt\":\"Uk8SoELAvk2PBQjDL4wMoQ==\",\"additionalParameters\":{}}",
+      "credentialData" : "{\"hashIterations\":210000,\"algorithm\":\"pbkdf2-sha512\",\"additionalParameters\":{}}"
+    } ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-flotte-management", "ADMIN" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "74c6121f-716e-4f30-a52d-c017ac82fece",
+    "username" : "moussa.conducteur",
+    "emailVerified" : false,
+    "createdTimestamp" : 1776513839531,
+    "enabled" : true,
+    "totp" : false,
+    "credentials" : [ {
+      "id" : "baf66673-1b56-4e67-b6cb-6abd4b42997f",
+      "type" : "password",
+      "userLabel" : "My password",
+      "createdDate" : 1776513859316,
+      "secretData" : "{\"value\":\"E/Na8YrSQWvDiPmPSb6azfxnmT7up4hcIBkBQJ86BxmCIO1Xk9ybO8dQYx/2vZ+R1qqQAGU5QPmkK6/FVurtMg==\",\"salt\":\"yGzEjfBzCKuKHXh+v93XBQ==\",\"additionalParameters\":{}}",
+      "credentialData" : "{\"hashIterations\":210000,\"algorithm\":\"pbkdf2-sha512\",\"additionalParameters\":{}}"
+    } ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ "UPDATE_PASSWORD" ],
+    "realmRoles" : [ "UTILISATEUR", "default-roles-flotte-management" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "89884902-4f02-4496-b4f7-0bbe00f0d165",
+    "username" : "oussama.technicien",
+    "emailVerified" : false,
+    "createdTimestamp" : 1776513750801,
+    "enabled" : true,
+    "totp" : false,
+    "credentials" : [ {
+      "id" : "4ebecc0d-4f57-4ecf-a7c3-44d45e433c16",
+      "type" : "password",
+      "userLabel" : "My password",
+      "createdDate" : 1776513807601,
+      "secretData" : "{\"value\":\"cMQmMnC/gbcRhw25lX5OiYETn0f6Nzcxz/Kp7K7/a/W3hdyfC88qIF+LtIebjwRlmtCFBTvcnVc5AREQXa1lJQ==\",\"salt\":\"ap6sQfPEHShd0JZSgv2SLA==\",\"additionalParameters\":{}}",
+      "credentialData" : "{\"hashIterations\":210000,\"algorithm\":\"pbkdf2-sha512\",\"additionalParameters\":{}}"
+    } ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-flotte-management", "TECHNICIEN" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "90bdc02d-528a-4fc6-aacc-e6e99150ef04",
+    "username" : "service-account-flotte-api-gateway",
+    "emailVerified" : false,
+    "createdTimestamp" : 1776513249452,
+    "enabled" : true,
+    "totp" : false,
+    "serviceAccountClientId" : "flotte-api-gateway",
+    "credentials" : [ ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-flotte-management" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "02a0e9e8-4e79-4ded-a53c-e7e937bb2032",
+    "username" : "souleyman.manager",
+    "emailVerified" : false,
+    "createdTimestamp" : 1776513702760,
+    "enabled" : true,
+    "totp" : false,
+    "credentials" : [ {
+      "id" : "68df414d-8309-468a-8521-19cc8f60c5a7",
+      "type" : "password",
+      "userLabel" : "My password",
+      "createdDate" : 1776513726697,
+      "secretData" : "{\"value\":\"ZG8+5DBZq1EOaUdtxdAKAVsTsx6VhdBq0AcaJlUaNNndELhmrVv6JUg/GRczRBRvjpIMK/+J166fngpLyQdZfg==\",\"salt\":\"LBrbPy/eiwAxp4XUSIyFaA==\",\"additionalParameters\":{}}",
+      "credentialData" : "{\"hashIterations\":210000,\"algorithm\":\"pbkdf2-sha512\",\"additionalParameters\":{}}"
+    } ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-flotte-management", "MANAGER" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  } ]
+}

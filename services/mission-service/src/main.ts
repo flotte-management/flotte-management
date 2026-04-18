@@ -1,9 +1,8 @@
-import { NestFactory, Reflector } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
-import { RolesGuard } from './common/guards';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -30,10 +29,6 @@ async function bootstrap() {
 
   // ─── Filtre d'exception global ────────────────────────────────────────────
   app.useGlobalFilters(new AllExceptionsFilter());
-
-  // ─── Guard global rôles ───────────────────────────────────────────────────
-  const reflector = app.get(Reflector);
-  app.useGlobalGuards(new RolesGuard(reflector));
 
   // ─── Swagger / OpenAPI ────────────────────────────────────────────────────
   const swaggerEnabled =
