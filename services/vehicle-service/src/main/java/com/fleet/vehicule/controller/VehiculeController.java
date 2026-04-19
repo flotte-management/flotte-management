@@ -29,6 +29,7 @@ public class VehiculeController {
      * Tous les rôles — paginé, filtrable par statut et/ou marque
      */
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'TECHNICIEN', 'UTILISATEUR')")
     public ResponseEntity<VehiculeDTO.PageResponse<VehiculeDTO.Response>> lister(
             @RequestParam(required = false) StatutVehicule statut,
             @RequestParam(required = false) String marque,
@@ -55,6 +56,7 @@ public class VehiculeController {
      * GET /api/v1/vehicules/{id}
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'TECHNICIEN', 'UTILISATEUR')")
     public ResponseEntity<VehiculeDTO.Response> detail(@PathVariable UUID id) {
         return ResponseEntity.ok(vehiculeService.trouverParId(id));
     }
@@ -99,7 +101,7 @@ public class VehiculeController {
      * GET /api/v1/vehicules/{id}/historique
      */
     @GetMapping("/{id}/historique")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'TECHNICIEN', 'UTILISATEUR')")
     public ResponseEntity<VehiculeDTO.PageResponse<VehiculeDTO.HistoriqueResponse>> historique(
             @PathVariable UUID id,
             @RequestParam(defaultValue = "0") int page,

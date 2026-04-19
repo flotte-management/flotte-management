@@ -165,12 +165,16 @@ services:
     build: ./services/vehicle-service
     container_name: vehicle-service
     ports:
-      - "8080:8080"
+      - "8081:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-vehicles:5432/vehicles_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: secret
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      APP_SECURITY_ENABLED: "true"
+      KEYCLOAK_REALM_URL: http://keycloak:8080/realms/flotte-management
+      KEYCLOAK_CLIENT_ID: flotte-services
+      KEYCLOAK_VERIFY_ISSUER: "false"
     depends_on:
       postgres-vehicles:
         condition: service_healthy
@@ -191,7 +195,10 @@ services:
       - DB_NAME=drivers_db
       - DB_USER=postgres
       - DB_PASSWORD=secret
-      # - KAFKA_BOOTSTRAP_SERVERS=kafka:9092 
+      - KEYCLOAK_REALM_URL=http://keycloak:8080/realms/flotte-management
+      - KEYCLOAK_CLIENT_ID=flotte-services
+      - KEYCLOAK_VERIFY_ISSUER=false
+      # - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     depends_on:
       postgres-drivers:
         condition: service_healthy
@@ -208,6 +215,8 @@ services:
       - DB_NAME=location_db
       - DB_USER=postgres
       - DB_PASSWORD=secret
+      - KEYCLOAK_REALM_URL=http://keycloak:8080/realms/flotte-management
+      - KEYCLOAK_VERIFY_ISSUER=false
       - DB_AUTO_BOOTSTRAP=true
       - GRPC_PORT=3001
       - AI_AGENT_ENABLED=true
@@ -248,6 +257,9 @@ services:
       - DB_NAME=maintenance_db
       - DB_USER=postgres
       - DB_PASSWORD=secret
+      - KEYCLOAK_REALM_URL=http://keycloak:8080/realms/flotte-management
+      - KEYCLOAK_CLIENT_ID=flotte-services
+      - KEYCLOAK_VERIFY_ISSUER=false
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     depends_on:
       postgres-maintenance:
