@@ -55,6 +55,9 @@ Optional variables:
 - `KAFKA_CLIENT_ID` default `location-service`
 - `KAFKA_TOPIC` default `location-domain-events`
 - `AI_AGENT_ENABLED` default `true`
+- `KEYCLOAK_REALM_URL` default `http://keycloak:8080/realms/flotte-management`
+- `KEYCLOAK_VERIFY_ISSUER` default `false`
+- `JWT_PUBLIC_KEY` optional fallback public key when JWKS is unavailable
 
 ## Database Notes
 

@@ -3,7 +3,12 @@ server:
 
 app:
   security:
-    enabled: false
+    enabled: ${APP_SECURITY_ENABLED:true}
+    keycloak:
+      realm-url: ${KEYCLOAK_REALM_URL:http://keycloak:8080/realms/flotte-management}
+      client-id: ${KEYCLOAK_CLIENT_ID:flotte-services}
+      verify-issuer: ${KEYCLOAK_VERIFY_ISSUER:false}
+      jwt-public-key: ${JWT_PUBLIC_KEY:}
 
 spring:
   application:
@@ -22,6 +27,12 @@ spring:
     hibernate:
       ddl-auto: update 
     show-sql: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${app.security.keycloak.realm-url}/protocol/openid-connect/certs
 
 springdoc:
   api-docs:

@@ -1,10 +1,10 @@
 import uuid
-from typing import Annotated, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.security import require_roles, get_current_user
+from app.core.security import TokenPayload, get_current_user, require_roles
 from app.db.session import get_db
 from app.kafka.producer import KafkaProducer, get_producer
 from app.models.maintenance import StatutMaintenance, TypeMaintenance
@@ -38,7 +38,7 @@ async def create_maintenance(
     payload: MaintenanceCreate,
     repo: MaintenanceRepository = Depends(get_repo),
     producer: KafkaProducer = Depends(get_producer),
-    #current_user: dict = Depends(require_roles(["admin", "technicien", "planificateur"])),
+    _user: TokenPayload = Depends(require_roles("ADMIN", "MANAGER")),
 ):
     maintenance = await repo.create(payload)
     await producer.send(
@@ -71,7 +71,7 @@ async def list_maintenances(
     statut: Optional[StatutMaintenance] = Query(None),
     type: Optional[TypeMaintenance] = Query(None),
     repo: MaintenanceRepository = Depends(get_repo),
-    #current_user: dict = Depends(get_current_user),
+    _user: TokenPayload = Depends(get_current_user),
 ):
     total, items = await repo.list_all(
         skip=skip,
@@ -95,7 +95,7 @@ async def list_maintenances(
 async def get_maintenance(
     maintenance_id: uuid.UUID,
     repo: MaintenanceRepository = Depends(get_repo),
-    #current_user: dict = Depends(get_current_user),
+    _user: TokenPayload = Depends(get_current_user),
 ):
     maintenance = await repo.get_by_id(maintenance_id)
     if not maintenance:
@@ -116,7 +116,7 @@ async def update_maintenance(
     payload: MaintenanceUpdate,
     repo: MaintenanceRepository = Depends(get_repo),
     producer: KafkaProducer = Depends(get_producer),
-    #current_user: dict = Depends(require_roles(["admin", "technicien", "planificateur"])),
+    _user: TokenPayload = Depends(require_roles("ADMIN", "MANAGER")),
 ):
     maintenance = await repo.update(maintenance_id, payload)
     if not maintenance:
@@ -146,7 +146,7 @@ async def delete_maintenance(
     maintenance_id: uuid.UUID,
     repo: MaintenanceRepository = Depends(get_repo),
     producer: KafkaProducer = Depends(get_producer),
-    #current_user: dict = Depends(require_roles(["admin"])),
+    _user: TokenPayload = Depends(require_roles("ADMIN")),
 ):
     deleted = await repo.delete(maintenance_id)
     if not deleted:
@@ -171,7 +171,7 @@ async def change_statut(
     statut: StatutMaintenance,
     repo: MaintenanceRepository = Depends(get_repo),
     producer: KafkaProducer = Depends(get_producer),
-    #current_user: dict = Depends(require_roles(["admin", "technicien"])),
+    _user: TokenPayload = Depends(require_roles("ADMIN", "MANAGER", "TECHNICIEN")),
 ):
     maintenance = await repo.update(maintenance_id, MaintenanceUpdate(statut=statut))
     if not maintenance:
@@ -200,7 +200,7 @@ async def change_statut(
 async def get_maintenances_by_vehicule(
     vehicule_id: uuid.UUID,
     repo: MaintenanceRepository = Depends(get_repo),
-    #current_user: dict = Depends(get_current_user),
+    _user: TokenPayload = Depends(get_current_user),
 ):
     return await repo.get_by_vehicule(vehicule_id)
 
@@ -218,7 +218,7 @@ async def add_piece(
     maintenance_id: uuid.UUID,
     payload: PieceRemplaceeCreate,
     repo: MaintenanceRepository = Depends(get_repo),
-    #current_user: dict = Depends(require_roles(["admin", "technicien"])),
+    _user: TokenPayload = Depends(require_roles("ADMIN", "MANAGER", "TECHNICIEN")),
 ):
     piece = await repo.add_piece(maintenance_id, payload)
     if not piece:
@@ -238,7 +238,7 @@ async def delete_piece(
     maintenance_id: uuid.UUID,
     piece_id: uuid.UUID,
     repo: MaintenanceRepository = Depends(get_repo),
-    #current_user: dict = Depends(require_roles(["admin", "technicien"])),
+    _user: TokenPayload = Depends(require_roles("ADMIN", "MANAGER", "TECHNICIEN")),
 ):
     deleted = await repo.delete_piece(piece_id)
     if not deleted:

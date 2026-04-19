@@ -58,6 +58,15 @@ async function bootstrap() {
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Location Service')
     .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'Keycloak access token',
+      },
+      'JWT-Keycloak',
+    )
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api', app, document);

@@ -73,8 +73,8 @@ async def _get_or_404(driver_id: uuid.UUID, repo: DriverRepository):
 )
 async def create_driver(
     payload: DriverCreate,
-    repo: DriverRepository = Depends(_repo)
-    # _user: TokenPayload = Depends(require_roles("admin", "fleet-manager", "dispatcher")),
+    repo: DriverRepository = Depends(_repo),
+    _user: TokenPayload = Depends(require_roles("ADMIN", "MANAGER")),
 ):
     # Unicité email
     if await repo.get_by_email(payload.email):
@@ -99,7 +99,7 @@ async def list_drivers(
     size: int = Query(default=20, ge=1, le=100),
     statut: StatutDriver | None = Query(default=None),
     repo: DriverRepository = Depends(_repo),
-    # _user: TokenPayload = Depends(get_current_user),
+    _user: TokenPayload = Depends(get_current_user),
 ):
     skip = (page - 1) * size
     items, total = await repo.get_all(skip=skip, limit=size, statut=statut)
@@ -114,7 +114,7 @@ async def list_drivers(
 async def get_driver(
     driver_id: uuid.UUID,
     repo: DriverRepository = Depends(_repo),
-    # _user: TokenPayload = Depends(get_current_user),
+    _user: TokenPayload = Depends(get_current_user),
 ):
     return await _get_or_404(driver_id, repo)
 
@@ -128,7 +128,7 @@ async def update_driver(
     driver_id: uuid.UUID,
     payload: DriverUpdate,
     repo: DriverRepository = Depends(_repo),
-    # _user: TokenPayload = Depends(require_roles("admin", "fleet-manager")),
+    _user: TokenPayload = Depends(require_roles("ADMIN", "MANAGER")),
 ):
     driver = await _get_or_404(driver_id, repo)
 
@@ -156,7 +156,7 @@ async def update_statut(
     driver_id: uuid.UUID,
     payload: DriverStatutUpdate,
     repo: DriverRepository = Depends(_repo),
-    # _user: TokenPayload = Depends(require_roles("admin", "fleet-manager")),
+    _user: TokenPayload = Depends(require_roles("ADMIN", "MANAGER")),
 ):
     driver = await _get_or_404(driver_id, repo)
     old_statut = driver.statut
@@ -179,7 +179,7 @@ async def update_statut(
 async def delete_driver(
     driver_id: uuid.UUID,
     repo: DriverRepository = Depends(_repo),
-    # _user: TokenPayload = Depends(require_roles("admin")),
+    _user: TokenPayload = Depends(require_roles("ADMIN")),
 ):
     driver = await _get_or_404(driver_id, repo)
     await repo.delete(driver)
@@ -196,7 +196,7 @@ async def delete_driver(
 async def list_permis(
     driver_id: uuid.UUID,
     repo: DriverRepository = Depends(_repo),
-    # _user: TokenPayload = Depends(get_current_user),
+    _user: TokenPayload = Depends(get_current_user),
 ):
     await _get_or_404(driver_id, repo)
     return await repo.get_permis_by_driver(driver_id)
@@ -212,7 +212,7 @@ async def add_permis(
     driver_id: uuid.UUID,
     payload: PermisCreate,
     repo: DriverRepository = Depends(_repo),
-    # _user: TokenPayload = Depends(require_roles("admin", "fleet-manager")),
+    _user: TokenPayload = Depends(require_roles("ADMIN", "MANAGER")),
 ):
     await _get_or_404(driver_id, repo)
     permis = await repo.create_permis(driver_id, payload)
@@ -232,7 +232,7 @@ async def update_permis(
     permis_id: uuid.UUID,
     payload: PermisUpdate,
     repo: DriverRepository = Depends(_repo),
-    # _user: TokenPayload = Depends(require_roles("admin", "fleet-manager")),
+    _user: TokenPayload = Depends(require_roles("ADMIN", "MANAGER")),
 ):
     await _get_or_404(driver_id, repo)
     permis = await repo.get_permis_by_id(permis_id)
@@ -253,7 +253,7 @@ async def delete_permis(
     driver_id: uuid.UUID,
     permis_id: uuid.UUID,
     repo: DriverRepository = Depends(_repo),
-    # _user: TokenPayload = Depends(require_roles("admin", "fleet-manager")),
+    _user: TokenPayload = Depends(require_roles("ADMIN", "MANAGER")),
 ):
     await _get_or_404(driver_id, repo)
     permis = await repo.get_permis_by_id(permis_id)
@@ -272,7 +272,7 @@ async def delete_permis(
 async def list_assignations(
     driver_id: uuid.UUID,
     repo: DriverRepository = Depends(_repo),
-    # _user: TokenPayload = Depends(get_current_user),
+    _user: TokenPayload = Depends(get_current_user),
 ):
     await _get_or_404(driver_id, repo)
     return await repo.get_assignations_by_driver(driver_id)
@@ -288,7 +288,7 @@ async def create_assignation(
     driver_id: uuid.UUID,
     payload: AssignationCreate,
     repo: DriverRepository = Depends(_repo),
-    # _user: TokenPayload = Depends(require_roles("admin", "fleet-manager", "dispatcher")),
+    _user: TokenPayload = Depends(require_roles("ADMIN", "MANAGER", "TECHNICIEN")),
 ):
     driver = await _get_or_404(driver_id, repo)
 
@@ -323,7 +323,7 @@ async def update_assignation(
     assignation_id: uuid.UUID,
     payload: AssignationUpdate,
     repo: DriverRepository = Depends(_repo),
-    # _user: TokenPayload = Depends(require_roles("admin", "fleet-manager", "dispatcher")),
+    _user: TokenPayload = Depends(require_roles("ADMIN", "MANAGER", "TECHNICIEN")),
 ):
     await _get_or_404(driver_id, repo)
     assignation = await repo.get_assignation_by_id(assignation_id)
@@ -344,7 +344,7 @@ async def delete_assignation(
     driver_id: uuid.UUID,
     assignation_id: uuid.UUID,
     repo: DriverRepository = Depends(_repo),
-    # _user: TokenPayload = Depends(require_roles("admin", "fleet-manager")),
+    _user: TokenPayload = Depends(require_roles("ADMIN", "MANAGER")),
 ):
     await _get_or_404(driver_id, repo)
     assignation = await repo.get_assignation_by_id(assignation_id)
