@@ -88,7 +88,11 @@ export const resolvers = {
   // ── Query ──────────────────────────────────────────────────────────────────
   Query: {
     async vehicules(_: unknown, args: Record<string, unknown>, ctx: GatewayContext) {
-      const q = buildQuery({ statut: args.statut, page: args.page, limit: args.limit });
+      // Frontend sends 1-indexed pages; Spring Boot expects 0-indexed pages.
+      const pageIndex = typeof args.page === 'number'
+        ? Math.max(0, (args.page as number) - 1)
+        : undefined;
+      const q = buildQuery({ statut: args.statut, page: pageIndex, size: args.limit });
       const res = await vehicleApi.list(q, ctx.token);
       logger.debug('vehiculeApi.list raw response keys: %o', Object.keys((res as Record<string, unknown>) ?? {}));
       return extractItems(res);
@@ -164,7 +168,7 @@ export const resolvers = {
     async dashboardFlotte(_: unknown, _args: unknown, ctx: GatewayContext) {
       // Parallel fan-out to all four services
       const [vehiculesRes, conducteursRes, missionsRes, maintenancesRes] = await Promise.allSettled([
-        vehicleApi.list('?limit=1000', ctx.token),
+        vehicleApi.list('?page=0&size=1000', ctx.token),
         driverApi.list('?limit=1000', ctx.token),
         missionApi.list('?limit=1000', ctx.token),
         maintenanceApi.list('?limit=1000', ctx.token),
