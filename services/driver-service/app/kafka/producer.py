@@ -59,26 +59,29 @@ async def stop_producer() -> None:
 
 # ── Helper interne ────────────────────────────────────────────────────────────
 
-async def _emit(event_type: str, payload: dict[str, Any]) -> None:
+async def _emit(event_type: str, payload: dict[str, Any], key: str | None = None) -> None:
     if _producer is None:
         logger.debug("Kafka désactivé – événement ignoré : %s", event_type)
         return
     envelope = {
-        "event_id": str(uuid.uuid4()),
-        "event_type": event_type,
+        "eventId": str(uuid.uuid4()),
+        "eventType": event_type,
+        "version": "1.0",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "source": "service-drivers",
+        "correlationId": None,
         "payload": payload,
     }
+    msg_key = (key or str(payload.get("driver_id", ""))).encode()
     try:
         await _producer.send_and_wait(
             settings.KAFKA_TOPIC_DRIVER,
             value=envelope,
-            key=str(payload.get("driver_id", "")).encode(),
+            key=msg_key,
         )
         logger.debug("Événement émis : %s", event_type)
     except Exception as exc:
-        # On logue sans lever pour ne pas bloquer la réponse HTTP
+        # Non-blocking — log and continue
         logger.error("Erreur émission Kafka %s : %s", event_type, exc)
 
 

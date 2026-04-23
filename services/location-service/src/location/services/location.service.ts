@@ -60,6 +60,7 @@ export class LocationService {
         precision: createdPosition.precision,
       },
       payload.correlationId,
+      createdPosition.vehiculeId, // partition key for ordered delivery per vehicle
     );
 
     await this.geofencingService.evaluateTransition(

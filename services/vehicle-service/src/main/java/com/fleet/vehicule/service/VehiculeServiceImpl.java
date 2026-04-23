@@ -1,21 +1,25 @@
 package com.fleet.vehicule.service;
 
-import com.fleet.vehicule.domain.*;
-import com.fleet.vehicule.dto.VehiculeDTO;
-import com.fleet.vehicule.exception.VehiculeNotFoundException;
-import com.fleet.vehicule.exception.ImmatriculationAlreadyExistsException;
-// import com.fleet.vehicule.kafka.KafkaVehiculeProducer;
-import com.fleet.vehicule.repository.HistoriqueStatutRepository;
-import com.fleet.vehicule.repository.VehiculeRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.time.Instant;
+import java.util.UUID;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.util.UUID;
+import com.fleet.vehicule.domain.HistoriqueStatut;
+import com.fleet.vehicule.domain.StatutVehicule;
+import com.fleet.vehicule.domain.Vehicule;
+import com.fleet.vehicule.dto.VehiculeDTO;
+import com.fleet.vehicule.exception.ImmatriculationAlreadyExistsException;
+import com.fleet.vehicule.exception.VehiculeNotFoundException;
+import com.fleet.vehicule.kafka.KafkaVehiculeProducer;
+import com.fleet.vehicule.repository.HistoriqueStatutRepository;
+import com.fleet.vehicule.repository.VehiculeRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Transactional
@@ -25,7 +29,7 @@ public class VehiculeServiceImpl implements VehiculeService {
 
     private final VehiculeRepository vehiculeRepository;
     private final HistoriqueStatutRepository historiqueRepository;
-    // private final KafkaVehiculeProducer kafkaProducer;
+    private final KafkaVehiculeProducer kafkaProducer;
 
     // ─── CRUD ────────────────────────────────────────────────────────────────
 
@@ -45,8 +49,7 @@ public class VehiculeServiceImpl implements VehiculeService {
 
         vehicule = vehiculeRepository.save(vehicule);
         log.info("Véhicule créé : {} ({})", vehicule.getId(), vehicule.getImmatriculation());
-
-        // kafkaProducer.publishCreated(vehicule);
+        kafkaProducer.publishCreated(vehicule);
         return toResponse(vehicule);
     }
 
@@ -93,8 +96,7 @@ public class VehiculeServiceImpl implements VehiculeService {
         Vehicule vehicule = getOrThrow(id);
         vehicule.setDeletedAt(Instant.now());
         vehiculeRepository.save(vehicule);
-
-        // kafkaProducer.publishDeleted(vehicule, modifiePar);
+        kafkaProducer.publishDeleted(vehicule, modifiePar);
         log.info("Véhicule {} supprimé (soft-delete) par {}", id, modifiePar);
     }
 
@@ -117,7 +119,7 @@ public class VehiculeServiceImpl implements VehiculeService {
                 .build();
         historiqueRepository.save(historique);
 
-        // kafkaProducer.publishStatutChanged(vehicule, ancien, req.getStatut(), req.getMotif(), modifiePar);
+        kafkaProducer.publishStatutChanged(vehicule, ancien, req.getStatut(), req.getMotif(), modifiePar);
         log.info("Véhicule {} : {} → {}", id, ancien, req.getStatut());
 
         return toResponse(vehicule);

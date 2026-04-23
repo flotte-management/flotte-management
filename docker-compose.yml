@@ -1,5 +1,4 @@
 services:
-
   postgres-vehicles:
     image: postgres:15-alpine
     container_name: postgres-vehicles
@@ -31,8 +30,7 @@ services:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       retries: 5
-    
-  
+
   postgres-location:
     image: timescale/timescaledb-ha:pg15
     container_name: postgres-location
@@ -41,7 +39,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: secret
     ports:
-      - "5434:5432"            
+      - "5434:5432"
     volumes:
       - pgdata_location:/var/lib/postgresql/data
       - ./services/location-service/db/init:/docker-entrypoint-initdb.d:ro
@@ -49,7 +47,7 @@ services:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       retries: 5
-  
+
   postgres-maintenance:
     image: postgres:15-alpine
     container_name: postgres-maintenance
@@ -58,14 +56,14 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: secret
     ports:
-      - "5435:5432"             
+      - "5435:5432"
     volumes:
       - pgdata_maintenance:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       retries: 5
-  
+
   postgres-mission:
     image: postgres:15-alpine
     container_name: postgres-mission
@@ -81,7 +79,7 @@ services:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       retries: 5
-  
+
   keycloak-db:
     image: postgres:16-alpine
     environment:
@@ -90,12 +88,11 @@ services:
       POSTGRES_PASSWORD: keycloak_secret
     volumes:
       - keycloak_db_data:/var/lib/postgresql/data
-  
 
   keycloak:
     image: quay.io/keycloak/keycloak:24.0
     container_name: flotte-keycloak
-    command: start-dev --import-realm   # importe le realm au démarrage
+    command: start-dev --import-realm # importe le realm au démarrage
     environment:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
@@ -109,17 +106,16 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+      - ./realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
     depends_on:
       - keycloak-db
-
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.6.0
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
     healthcheck:
-      test: [ "CMD", "nc", "-z", "localhost", "2181" ]
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -140,7 +136,13 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
     healthcheck:
-      test: [ "CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092" ]
+      test:
+        [
+          "CMD",
+          "kafka-broker-api-versions",
+          "--bootstrap-server",
+          "localhost:9092",
+        ]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -151,15 +153,18 @@ services:
       kafka:
         condition: service_healthy
     # Crée les topics avec le bon nombre de partitions (§8.2 Table 14)
-    entrypoint: [ "/bin/bash", "-c", "
-      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 6  --replication-factor 1 --topic flotte.vehicules &&
-      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 3  --replication-factor 1 --topic flotte.conducteurs &&
-      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 3  --replication-factor 1 --topic flotte.maintenances &&
-      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 12 --replication-factor 1 --topic flotte.localisation &&
-      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 6  --replication-factor 1 --topic flotte.missions &&
-      echo 'Topics créés avec succès'
-    " ]
-
+    entrypoint: [
+        "/bin/bash",
+        "-c",
+        "
+        kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 6  --replication-factor 1 --topic flotte.vehicules &&
+        kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 3  --replication-factor 1 --topic flotte.conducteurs &&
+        kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 3  --replication-factor 1 --topic flotte.maintenances &&
+        kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 12 --replication-factor 1 --topic flotte.localisation &&
+        kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 6  --replication-factor 1 --topic flotte.missions &&
+        echo 'Topics créés avec succès'
+        ",
+      ]
 
   vehicle-service:
     build: ./services/vehicle-service
@@ -175,12 +180,15 @@ services:
       KEYCLOAK_REALM_URL: http://keycloak:8080/realms/flotte-management
       KEYCLOAK_CLIENT_ID: flotte-services
       KEYCLOAK_VERIFY_ISSUER: "false"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
       postgres-vehicles:
         condition: service_healthy
+      kafka:
+        condition: service_healthy
 
   driver-service:
-    build: ./services/driver-service    
+    build: ./services/driver-service
     container_name: driver-service
     working_dir: /app
     command: >
@@ -198,17 +206,19 @@ services:
       - KEYCLOAK_REALM_URL=http://keycloak:8080/realms/flotte-management
       - KEYCLOAK_CLIENT_ID=flotte-services
       - KEYCLOAK_VERIFY_ISSUER=false
-      # - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
     depends_on:
       postgres-drivers:
         condition: service_healthy
-  
+      kafka:
+        condition: service_healthy
+
   location-service:
     build: ./services/location-service
     container_name: location-service
     ports:
-      - "3003:3000"            
-      - "3004:3001"            
+      - "3003:3000"
+      - "3004:3001"
     environment:
       - DB_HOST=postgres-location
       - DB_PORT=5432
@@ -220,31 +230,33 @@ services:
       - DB_AUTO_BOOTSTRAP=true
       - GRPC_PORT=3001
       - AI_AGENT_ENABLED=true
-      - KAFKA_ENABLED=false
-      #- KAFKA_BROKERS=kafka:9092
+      - KAFKA_ENABLED=true
+      - KAFKA_BROKERS=kafka:29092
+      - KAFKA_TOPIC=flotte.localisation
+      - KAFKA_GROUP_ID=location-service-group
     depends_on:
       postgres-location:
         condition: service_healthy
-      #kafka:
-       # condition: service_started
-  
+      kafka:
+        condition: service_healthy
+
   event-service:
     build: ./services/event-service
     container_name: event-service
     depends_on:
-      kafka:
-        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
     environment:
       KAFKA_BROKERS: kafka:29092
     restart: unless-stopped
     #ports:
-     # - "8003:8080"
-   # environment:
+    # - "8003:8080"
+    # environment:
     #  - KAFKA_BROKERS=kafka:9092
     #depends_on:
-     # kafka:
-      #  condition: service_started
-  
+    # kafka:
+    #  condition: service_started
+
   maintenance-service:
     build: ./services/maintenance-service
     container_name: maintenance-service
@@ -260,19 +272,19 @@ services:
       - KEYCLOAK_REALM_URL=http://keycloak:8080/realms/flotte-management
       - KEYCLOAK_CLIENT_ID=flotte-services
       - KEYCLOAK_VERIFY_ISSUER=false
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
     depends_on:
       postgres-maintenance:
         condition: service_healthy
-      #kafka:
-       # condition: service_started
-  
+      kafka:
+        condition: service_healthy
+
   mission-service:
     build: ./services/mission-service
     container_name: mission-service
     ports:
       - "3005:3005"
-    environment:  
+    environment:
       - DB_HOST=postgres-mission
       - DB_PORT=5432
       - DB_NAME=mission_db
@@ -280,15 +292,39 @@ services:
       - DB_PASSWORD=secret
       - DB_SYNCHRONIZE=true
       - KEYCLOAK_REALM_URL=http://keycloak:8080/realms/flotte-management
-      - KAFKA_ENABLED=false
-      - KAFKA_BROKERS=kafka:9092
+      - KAFKA_ENABLED=true
+      - KAFKA_BROKERS=kafka:29092
+      - KAFKA_GROUP_ID=mission-service-group
     depends_on:
       postgres-mission:
         condition: service_healthy
-     # kafka:
-      #  condition: service_started
-    env_file:
-      - ./services/mission-service/.env
+      kafka:
+        condition: service_healthy
+
+  gateway:
+    build: ./gateway
+    container_name: api-gateway
+    ports:
+      - "4000:4000"
+    environment:
+      GATEWAY_PORT: "4000"
+      NODE_ENV: production
+      VEHICLE_SERVICE_URL: http://vehicle-service:8080
+      DRIVER_SERVICE_URL: http://driver-service:8000
+      MAINTENANCE_SERVICE_URL: http://maintenance-service:8000
+      MISSION_SERVICE_URL: http://mission-service:3005
+      LOCATION_SERVICE_URL: http://location-service:3000
+      KAFKA_BROKERS: kafka:29092
+      KAFKA_CLIENT_ID: gateway-service
+      KAFKA_GROUP_ID: gateway-group
+      KEYCLOAK_REALM_URL: http://keycloak:8080/realms/flotte-management
+      KEYCLOAK_CLIENT_ID: flotte-services
+      KEYCLOAK_VERIFY_ISSUER: "false"
+      CORS_ORIGIN: "http://localhost:5173,http://localhost:3000"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   pgdata_vehicles:

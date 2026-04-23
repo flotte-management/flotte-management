@@ -41,16 +41,22 @@ async def create_maintenance(
     _user: TokenPayload = Depends(require_roles("ADMIN", "MANAGER")),
 ):
     maintenance = await repo.create(payload)
-    await producer.send(
-        topic="maintenance.created",
-        key=str(maintenance.id),
-        value={
-            "maintenance_id": str(maintenance.id),
-            "vehicule_id": str(maintenance.vehicule_id),
-            "type": maintenance.type.value,
-            "statut": maintenance.statut.value,
-            "technicien_id": str(maintenance.technicien_id),
-        },
+    technicien_id = str(maintenance.technicien_id) if maintenance.technicien_id else None
+    date_planifiee = maintenance.date_planifiee.isoformat() if maintenance.date_planifiee else ""
+    await producer.emit_created(
+        maintenance_id=str(maintenance.id),
+        vehicule_id=str(maintenance.vehicule_id),
+        type_=maintenance.type.value,
+        technicien_id=technicien_id,
+        date_planifiee=date_planifiee,
+    )
+    # Also emit maintenance.planned for event-service notifications
+    await producer.emit_planned(
+        maintenance_id=str(maintenance.id),
+        vehicule_id=str(maintenance.vehicule_id),
+        type_=maintenance.type.value,
+        date_planifiee=date_planifiee,
+        technicien_id=technicien_id,
     )
     return maintenance
 
@@ -122,14 +128,10 @@ async def update_maintenance(
     if not maintenance:
         raise HTTPException(status_code=404, detail="Maintenance introuvable")
 
-    await producer.send(
-        topic="maintenance.updated",
-        key=str(maintenance.id),
-        value={
-            "maintenance_id": str(maintenance.id),
-            "statut": maintenance.statut.value,
-            "updated_fields": list(payload.model_dump(exclude_unset=True).keys()),
-        },
+    await producer.emit_statut_changed(
+        maintenance_id=str(maintenance.id),
+        vehicule_id=str(maintenance.vehicule_id),
+        nouveau_statut=maintenance.statut.value,
     )
     return maintenance
 
@@ -151,11 +153,7 @@ async def delete_maintenance(
     deleted = await repo.delete(maintenance_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Maintenance introuvable")
-    await producer.send(
-        topic="maintenance.deleted",
-        key=str(maintenance_id),
-        value={"maintenance_id": str(maintenance_id)},
-    )
+    await producer.emit_deleted(maintenance_id=str(maintenance_id))
 
 
 # ──────────────────────────────────────────────────────────────
@@ -177,15 +175,16 @@ async def change_statut(
     if not maintenance:
         raise HTTPException(status_code=404, detail="Maintenance introuvable")
 
-    await producer.send(
-        topic="maintenance.statut_changed",
-        key=str(maintenance_id),
-        value={
-            "maintenance_id": str(maintenance_id),
-            "nouveau_statut": statut.value,
-            "vehicule_id": str(maintenance.vehicule_id),
-        },
-    )
+    vehicule_id = str(maintenance.vehicule_id)
+
+    # Emit saga events that trigger vehicle status changes
+    if statut.value == "en_cours":
+        await producer.emit_started(str(maintenance_id), vehicule_id)
+    elif statut.value == "terminee":
+        await producer.emit_completed(str(maintenance_id), vehicule_id)
+
+    # Always emit the general statut_changed event
+    await producer.emit_statut_changed(str(maintenance_id), vehicule_id, statut.value)
     return maintenance
 
 

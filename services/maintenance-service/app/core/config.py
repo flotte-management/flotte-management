@@ -24,9 +24,10 @@ class Settings(BaseSettings):
     JWT_PUBLIC_KEY: str | None = None
 
     # ── Kafka ────────────────────────────────────────────────────────────────
-    KAFKA_BOOTSTRAP_SERVERS: str = "kafka:9092"
+    KAFKA_BOOTSTRAP_SERVERS: str = "kafka:29092"
     KAFKA_CLIENT_ID: str = "service-maintenances"
-    KAFKA_TOPIC_MAINTENANCE: str = "maintenance-events"
+    KAFKA_TOPIC_MAINTENANCE: str = "flotte.maintenances"
+    KAFKA_GROUP_ID: str = "maintenance-service-group"
 
     # ── App ──────────────────────────────────────────────────────────────────
     APP_NAME: str = "maintenance-service"

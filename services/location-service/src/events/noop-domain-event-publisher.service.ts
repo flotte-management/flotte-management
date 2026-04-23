@@ -11,6 +11,7 @@ export class NoopDomainEventPublisherService implements DomainEventPublisher {
     eventType: string,
     payload: TPayload,
     correlationId?: string,
+    _partitionKey?: string,
   ): Promise<void> {
     const envelope: DomainEventEnvelope<TPayload> = {
       eventId: randomUUID(),

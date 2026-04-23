@@ -19,6 +19,7 @@ export class KafkaDomainEventPublisherService
     eventType: string,
     payload: TPayload,
     correlationId?: string,
+    partitionKey?: string,
   ): Promise<void> {
     const envelope: DomainEventEnvelope<TPayload> = {
       eventId: randomUUID(),
@@ -36,7 +37,8 @@ export class KafkaDomainEventPublisherService
         topic: this.config.kafkaTopic,
         messages: [
           {
-            key: envelope.eventId,
+            // Use vehiculeId (or correlationId) as partition key for ordering
+            key: partitionKey ?? envelope.eventId,
             value: JSON.stringify(envelope),
           },
         ],

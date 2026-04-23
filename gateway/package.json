@@ -1,0 +1,43 @@
+{
+  "name": "flotte-gateway",
+  "version": "1.0.0",
+  "description": "Apollo Server 4 GraphQL Gateway / BFF for flotte-management",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts"
+  },
+  "dependencies": {
+    "@apollo/server": "^4.10.4",
+    "@graphql-tools/schema": "^10.0.4",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "dataloader": "^2.2.2",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.3.1",
+    "graphql": "^16.8.2",
+    "graphql-subscriptions": "^2.0.0",
+    "graphql-tag": "^2.12.6",
+    "graphql-ws": "^5.16.0",
+    "jsonwebtoken": "^9.0.2",
+    "jwks-rsa": "^3.1.0",
+    "kafkajs": "^2.2.4",
+    "node-fetch": "^3.3.2",
+    "uuid": "^10.0.0",
+    "winston": "^3.13.0",
+    "ws": "^8.17.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/node": "^20.14.2",
+    "@types/ws": "^8.5.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

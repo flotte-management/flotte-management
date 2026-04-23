@@ -20,8 +20,9 @@ class Settings(BaseSettings):
     JWT_PUBLIC_KEY: str | None = None
 
     # ── Kafka ────────────────────────────────────────────────────────────────
-    KAFKA_BOOTSTRAP_SERVERS: str = "kafka:9092"
-    KAFKA_TOPIC_DRIVER: str = "driver-events"
+    KAFKA_BOOTSTRAP_SERVERS: str = "kafka:29092"
+    KAFKA_TOPIC_DRIVER: str = "flotte.conducteurs"
+    KAFKA_GROUP_ID: str = "driver-service-group"
 
     # ── App ──────────────────────────────────────────────────────────────────
     APP_ENV: str = "development"

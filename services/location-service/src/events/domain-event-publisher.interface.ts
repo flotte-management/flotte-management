@@ -3,5 +3,6 @@ export interface DomainEventPublisher {
     eventType: string,
     payload: TPayload,
     correlationId?: string,
+    partitionKey?: string,
   ): Promise<void>;
 }

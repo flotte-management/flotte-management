@@ -1,15 +1,17 @@
 package com.fleet.vehicule.kafka;
 
-import com.fleet.vehicule.domain.StatutVehicule;
-import com.fleet.vehicule.domain.Vehicule;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.stereotype.Component;
-
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
+
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Component;
+
+import com.fleet.vehicule.domain.StatutVehicule;
+import com.fleet.vehicule.domain.Vehicule;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @RequiredArgsConstructor
@@ -34,6 +36,9 @@ public class KafkaVehiculeProducer {
         send("vehicule.created", v.getId().toString(), payload, null);
     }
 
+    /** System UUID used when status changes are triggered by internal saga consumers. */
+    public static final UUID SYSTEM_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
+
     public void publishStatutChanged(Vehicule v, StatutVehicule avant, StatutVehicule apres,
                                      String motif, UUID modifiePar) {
         Map<String, Object> payload = Map.of(
@@ -41,7 +46,7 @@ public class KafkaVehiculeProducer {
                 "statutAvant", avant.name(),
                 "statutApres", apres.name(),
                 "motif", motif != null ? motif : "",
-                "modifiePar", modifiePar.toString()
+                "modifiePar", (modifiePar != null ? modifiePar : SYSTEM_UUID).toString()
         );
         send("vehicule.statut_changed", v.getId().toString(), payload, null);
     }

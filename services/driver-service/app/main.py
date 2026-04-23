@@ -1,8 +1,9 @@
 """
 Point d'entrée FastAPI.
-Lifespan : démarrage/arrêt du producteur Kafka.
+Lifespan : démarrage/arrêt du producteur et consommateur Kafka.
 """
 
+import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -11,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.kafka.producer import start_producer, stop_producer
+from app.kafka.consumer import run_consumer
 
 settings = get_settings()
 
@@ -19,8 +21,14 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     # ── Startup ──────────────────────────────────────────────────────────────
     await start_producer()
+    consumer_task = asyncio.create_task(run_consumer())
     yield
     # ── Shutdown ─────────────────────────────────────────────────────────────
+    consumer_task.cancel()
+    try:
+        await consumer_task
+    except asyncio.CancelledError:
+        pass
     await stop_producer()
 
 

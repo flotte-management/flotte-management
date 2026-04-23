@@ -103,6 +103,7 @@ export class GeofencingService {
         detecteLe: detectedAt,
       },
       correlationId,
+      vehiculeId, // partition key — all alerts for the same vehicle go to the same partition
     );
 
     return alert;
