@@ -152,7 +152,6 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
-    # Crée les topics avec le bon nombre de partitions (§8.2 Table 14)
     entrypoint: [
         "/bin/bash",
         "-c",
@@ -324,6 +323,15 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+    restart: unless-stopped
+  
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:80" # On accède à l'app via http://localhost:5173
+    container_name: flotte-frontend
     restart: unless-stopped
 
 volumes:

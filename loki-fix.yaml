@@ -1,0 +1,4 @@
+loki:
+  grafana:
+    datasource:
+      isDefault: false

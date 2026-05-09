@@ -181,7 +181,7 @@ minikube image load driver-service:latest
 minikube image load maintenance-service:latest
 minikube image load location-service:latest
 minikube image load mission-service:latest
-minikube image load notification-service:latest
+minikube image load event-service:latest
 
 # Appliquer tous les manifests Kubernetes
 kubectl apply -f infra/k8s/
@@ -354,7 +354,7 @@ kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring
 kubectl port-forward svc/prometheus-kube-prometheus-prometheus 9090:9090 -n monitoring
 
 # Jaeger — traces distribuées
-kubectl port-forward svc/jaeger-query 16686:16686 -n monitoring
+kubectl port-forward svc/jaeger 16686:16686 -n monitoring
 ```
 
 ### URLs et credentials
