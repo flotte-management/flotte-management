@@ -95,6 +95,10 @@ class DriverRepository:
         await self.db.delete(driver)
         await self.db.flush()
 
+    async def count_by_statut(self, statut: StatutDriver) -> int:
+        stmt = select(func.count()).select_from(Driver).where(Driver.statut == statut)
+        return int((await self.db.execute(stmt)).scalar_one())
+
     # ── Permis ─────────────────────────────────────────────────────────────
 
     async def get_permis_by_driver(

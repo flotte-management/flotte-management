@@ -7,6 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import TokenPayload, get_current_user, require_roles
 from app.db.session import get_db
 from app.kafka.producer import KafkaProducer, get_producer
+from app.metrics import (
+    record_maintenance_created,
+    record_maintenance_deleted,
+    record_maintenance_status_changed,
+    record_piece_added,
+    record_piece_removed,
+)
 from app.models.maintenance import StatutMaintenance, TypeMaintenance
 from app.repositories.maintenance_repository import MaintenanceRepository
 from app.schemas.maintenance import (
@@ -41,6 +48,7 @@ async def create_maintenance(
     _user: TokenPayload = Depends(require_roles("ADMIN", "MANAGER")),
 ):
     maintenance = await repo.create(payload)
+    record_maintenance_created()
     technicien_id = str(maintenance.technicien_id) if maintenance.technicien_id else None
     date_planifiee = maintenance.date_planifiee.isoformat() if maintenance.date_planifiee else ""
     await producer.emit_created(
@@ -153,6 +161,7 @@ async def delete_maintenance(
     deleted = await repo.delete(maintenance_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Maintenance introuvable")
+    record_maintenance_deleted()
     await producer.emit_deleted(maintenance_id=str(maintenance_id))
 
 
@@ -174,6 +183,8 @@ async def change_statut(
     maintenance = await repo.update(maintenance_id, MaintenanceUpdate(statut=statut))
     if not maintenance:
         raise HTTPException(status_code=404, detail="Maintenance introuvable")
+
+    record_maintenance_status_changed(maintenance.statut.value)
 
     vehicule_id = str(maintenance.vehicule_id)
 
@@ -222,6 +233,7 @@ async def add_piece(
     piece = await repo.add_piece(maintenance_id, payload)
     if not piece:
         raise HTTPException(status_code=404, detail="Maintenance introuvable")
+    record_piece_added()
     return piece
 
 
@@ -242,3 +254,4 @@ async def delete_piece(
     deleted = await repo.delete_piece(piece_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Pièce introuvable")
+    record_piece_removed()

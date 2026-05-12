@@ -23,57 +23,179 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "Prometheus"
-      },
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
       "fieldConfig": {
         "defaults": {
           "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "red", "value": 80 }
-            ]
-          }
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "red", "value": 1 }
+          ] }
         },
         "overrides": []
       },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 0
-      },
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
       "id": 2,
       "options": {
         "displayMode": "lcd",
         "orientation": "auto",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
-        },
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
         "showUnfilled": true,
         "textMode": "auto"
       },
       "pluginVersion": "10.4.0",
       "targets": [
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "Prometheus"
-          },
+          "datasource": { "type": "prometheus", "uid": "Prometheus" },
           "editorMode": "builder",
-          "expr": "up",
+          "expr": "sum(up{job=~\"vehicle-service|driver-service|maintenance-service|mission-service|location-service\"})",
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "État des Services (Uptime)",
+      "title": "Services UP (total)",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "gridPos": { "h": 6, "w": 18, "x": 6, "y": 0 },
+      "id": 3,
+      "options": { "legend": { "showLegend": true } },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "expr": "sum by (job) (rate(http_server_requests_seconds_count[5m]))",
+          "legendFormat": "{{job}} (spring)",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "expr": "sum by (job) (rate(http_requests_total[5m]))",
+          "legendFormat": "{{job}} (http)",
+          "refId": "B"
+        }
+      ],
+      "title": "Trafic HTTP (req/s)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 6 },
+      "id": 4,
+      "options": { "legend": { "showLegend": true } },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "expr": "sum by (job) (rate(http_server_requests_seconds_count{status=~\"5..\"}[5m]))",
+          "legendFormat": "{{job}} (spring)",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "expr": "sum by (job) (rate(http_requests_total{code=~\"5..\"}[5m]))",
+          "legendFormat": "{{job}} (http)",
+          "refId": "B"
+        }
+      ],
+      "title": "Erreurs 5xx (req/s)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 6 },
+      "id": 5,
+      "options": { "legend": { "showLegend": true } },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "expr": "histogram_quantile(0.95, sum by (le, job) (rate(http_server_requests_seconds_bucket[5m])))",
+          "legendFormat": "{{job}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Latence P95 (s)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "description": "Exposez un compteur fleet_missions_created_total dans les services mission/gateway.",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 12 },
+      "id": 6,
+      "options": { "legend": { "showLegend": false } },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "expr": "rate(fleet_missions_created_total[5m])",
+          "legendFormat": "missions",
+          "refId": "A"
+        }
+      ],
+      "title": "Missions créées (req/s)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "description": "Exposez un compteur fleet_maintenances_created_total dans le service maintenance.",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 12 },
+      "id": 7,
+      "options": { "legend": { "showLegend": false } },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "expr": "rate(fleet_maintenances_created_total[5m])",
+          "legendFormat": "maintenances",
+          "refId": "A"
+        }
+      ],
+      "title": "Maintenances créées (req/s)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "description": "Jauge temps reel: fleet_drivers_active.",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 12 },
+      "id": 8,
+      "options": {
+        "displayMode": "lcd",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showUnfilled": true,
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "expr": "fleet_drivers_active",
+          "legendFormat": "drivers",
+          "refId": "A"
+        }
+      ],
+      "title": "Conducteurs actifs",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "description": "Jauge temps reel: fleet_vehicles_active.",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 12 },
+      "id": 9,
+      "options": {
+        "displayMode": "lcd",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showUnfilled": true,
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "expr": "fleet_vehicles_active",
+          "legendFormat": "vehicles",
+          "refId": "A"
+        }
+      ],
+      "title": "Véhicules actifs",
       "type": "stat"
     }
   ],
