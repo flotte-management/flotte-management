@@ -5,6 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { MissionsModule } from './missions/missions.module';
 import { KafkaModule } from './kafka/kafka.module';
 import { HealthController } from './health.controller';
+import { MetricsController } from './metrics/metrics.controller';
 
 @Module({
   imports: [
@@ -18,6 +19,6 @@ import { HealthController } from './health.controller';
     KafkaModule,
     MissionsModule,
   ],
-  controllers: [HealthController],
+  controllers: [HealthController, MetricsController],
 })
 export class AppModule {}

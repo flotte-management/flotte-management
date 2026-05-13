@@ -23,4 +23,6 @@ public interface VehiculeRepository extends JpaRepository<Vehicule, UUID> {
             StatutVehicule statut, String marque, Pageable pageable);
 
     boolean existsByImmatriculation(String immatriculation);
+
+    long countByStatut(StatutVehicule statut);
 }

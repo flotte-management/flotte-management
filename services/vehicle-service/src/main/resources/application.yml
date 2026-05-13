@@ -34,6 +34,15 @@ spring:
         jwt:
           jwk-set-uri: ${app.security.keycloak.realm-url}/protocol/openid-connect/certs
 
+management:
+  endpoints:
+    web:
+      base-path: /
+      exposure:
+        include: prometheus,health
+      path-mapping:
+        prometheus: metrics
+
 springdoc:
   api-docs:
     path: /v3/api-docs

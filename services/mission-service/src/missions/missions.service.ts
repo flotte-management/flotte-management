@@ -20,6 +20,16 @@ import {
 import { KafkaService } from '../kafka/kafka.service';
 import { Role, StatutEtape, StatutMission } from '../common/enums';
 import { JwtPayload } from '../common/decorators/current-user.decorator';
+import {
+  recordEtapeAdded,
+  recordEtapeUpdated,
+  recordMissionCancelled,
+  recordMissionCompleted,
+  recordMissionCreated,
+  recordMissionDeleted,
+  recordMissionStarted,
+  recordMissionStatusChanged,
+} from '../metrics/mission.metrics';
 
 // Transitions de statut autorisées
 const TRANSITIONS: Record<StatutMission, StatutMission[]> = {
@@ -120,6 +130,7 @@ export class MissionsService {
     }) as Mission;
 
     const saved = await this.missionRepo.save(mission);
+    recordMissionCreated();
 
     // Publication Kafka (best-effort — ne bloque pas la réponse)
     this.kafkaService
@@ -216,6 +227,15 @@ export class MissionsService {
     mission.statut = dto.statut;
     const saved = await this.missionRepo.save(mission);
 
+    recordMissionStatusChanged(saved.statut);
+    if (saved.statut === StatutMission.EN_COURS) {
+      recordMissionStarted();
+    } else if (saved.statut === StatutMission.TERMINEE) {
+      recordMissionCompleted();
+    } else if (saved.statut === StatutMission.ANNULEE) {
+      recordMissionCancelled();
+    }
+
     // Publication Kafka par événement
     this.publishStatutEvent(saved, currentUser.sub).catch((err) =>
       this.logger.error(`Kafka statut event échoué: ${err.message}`),
@@ -284,6 +304,9 @@ export class MissionsService {
     mission.motifAnnulation = 'Suppression manuelle';
     await this.missionRepo.save(mission);
 
+    recordMissionCancelled();
+    recordMissionDeleted();
+
     this.kafkaService
       .publishMissionCancelled({
         missionId: mission.id,
@@ -342,7 +365,9 @@ export class MissionsService {
       statut: StatutEtape.EN_ATTENTE,
     });
 
-    return this.etapeRepo.save(etape);
+    const saved = await this.etapeRepo.save(etape);
+    recordEtapeAdded();
+    return saved;
   }
 
   async patchEtape(
@@ -368,6 +393,8 @@ export class MissionsService {
       etape.heureArrivee = new Date();
     }
 
-    return this.etapeRepo.save(etape);
+    const saved = await this.etapeRepo.save(etape);
+    recordEtapeUpdated();
+    return saved;
   }
 }

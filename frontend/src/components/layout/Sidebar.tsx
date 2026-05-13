@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard, Car, Users, Wrench, MapPin, ClipboardList,
+  LayoutDashboard, Car, Users, Wrench, MapPin, ClipboardList, Info,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { to: '/maintenances',  icon: Wrench,          label: 'Maintenances',     roles: ['ADMIN', 'MANAGER', 'TECHNICIEN'] },
   { to: '/localisation',  icon: MapPin,          label: 'Localisation',     roles: ['ADMIN', 'MANAGER'] },
   { to: '/missions',      icon: ClipboardList,   label: 'Missions',         roles: [] as string[] },
+  { to: '/about',         icon: Info,            label: 'A propos',         roles: [] as string[] },
 ];
 
 export function Sidebar() {

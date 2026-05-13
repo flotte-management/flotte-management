@@ -2,6 +2,7 @@ import { useQuery, useSubscription } from '@apollo/client/react';
 import { useState } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { AppLayout } from '../components/layout/AppLayout';
+import { Link } from 'react-router-dom';
 import { Card, StatCard } from '../components/ui/Card';
 import { DASHBOARD_QUERY, NOUVELLE_ALERTE_SUBSCRIPTION } from '../apollo/queries/dashboard';
 import type { DashboardStats, AlerteEvent } from '../types';
@@ -47,6 +48,32 @@ export default function Dashboard() {
 
   return (
     <AppLayout title="Dashboard">
+      <Card>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Bienvenue sur Flotte Management</div>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+              Consultez les indicateurs ou decouvrez la page A propos pour mieux connaitre l'application.
+            </div>
+          </div>
+          <Link
+            to="/about"
+            style={{
+              fontSize: 13,
+              color: 'var(--text-primary)',
+              textDecoration: 'none',
+              border: '1px solid var(--border)',
+              borderRadius: 999,
+              padding: '8px 14px',
+              background: 'var(--bg-elevated)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            A propos
+          </Link>
+        </div>
+      </Card>
+
       {loading && !stats ? (
         <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-secondary)' }}>Chargement…</div>
       ) : (

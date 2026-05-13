@@ -7,12 +7,18 @@ import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi import Response
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from app.api.v1.router import api_router
 from app.core.config import get_settings
+from app.db.session import AsyncSessionLocal
 from app.kafka.producer import start_producer, stop_producer
 from app.kafka.consumer import run_consumer
+from app.metrics import set_drivers_active
+from app.models.driver import StatutDriver
+from app.repositories.driver_repository import DriverRepository
 
 settings = get_settings()
 
@@ -62,3 +68,13 @@ app.include_router(api_router)
 @app.get("/health", tags=["Health"])
 async def health():
     return {"status": "ok", "service": "service-drivers"}
+
+
+@app.get("/metrics")
+async def metrics():
+    async with AsyncSessionLocal() as session:
+        repo = DriverRepository(session)
+        active_count = await repo.count_by_statut(StatutDriver.actif)
+        set_drivers_active(active_count)
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
