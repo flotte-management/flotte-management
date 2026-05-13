@@ -150,9 +150,9 @@ export const maintenanceApi = {
 
 export const locationApi = {
   latestPosition:  (vehiculeId: string, token?: string) =>
-    request(config.services.location, 'location-service', `/api/v1/positions/${vehiculeId}`, 'GET', token),
+    request(config.services.location, 'location-service', `/localisation/${vehiculeId}/position`, 'GET', token),
   history:         (vehiculeId: string, q: string, token?: string) =>
-    request(config.services.location, 'location-service', `/api/v1/positions/${vehiculeId}/history${q}`, 'GET', token),
+    request(config.services.location, 'location-service', `/localisation/${vehiculeId}/historique${q}`, 'GET', token),
   ingest:          (body: unknown, token?: string) =>
-    request(config.services.location, 'location-service', '/api/v1/positions', 'POST', token, body),
+    request(config.services.location, 'location-service', '/localisation/positions', 'POST', token, body),
 };
