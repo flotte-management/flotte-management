@@ -1,3 +1,4 @@
+import React, { Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthGuard } from './auth/AuthGuard'
 
@@ -14,6 +15,8 @@ import MaintenanceDetail from './pages/Maintenances/MaintenanceDetail'
 import MissionsList from './pages/Missions/MissionsList'
 import MissionDetail from './pages/Missions/MissionDetail'
 import Localisation from './pages/Localisation'
+
+const AboutPage = React.lazy(() => import('aboutApp/AboutPage'))
 
 export default function App() {
   return (
@@ -85,6 +88,15 @@ export default function App() {
         <Route path="/localisation" element={
           <AuthGuard roles={['ADMIN', 'MANAGER', 'TECHNICIEN', 'CONDUCTEUR']}>
             <Localisation />
+          </AuthGuard>
+        } />
+
+        {/* A propos */}
+        <Route path="/about" element={
+          <AuthGuard roles={['ADMIN', 'MANAGER', 'TECHNICIEN', 'UTILISATEUR', 'CONDUCTEUR']}>
+            <Suspense fallback={<div>Chargement...</div>}>
+              <AboutPage />
+            </Suspense>
           </AuthGuard>
         } />
 

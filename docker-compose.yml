@@ -359,6 +359,15 @@ services:
     container_name: flotte-frontend
     restart: unless-stopped
 
+  about-mfe:
+    build:
+      context: ./frontend-about
+      dockerfile: Dockerfile
+    ports:
+      - "3001:80"
+    container_name: about-mfe
+    restart: unless-stopped
+
   jaeger:
     image: jaegertracing/all-in-one:latest
     container_name: jaeger
