@@ -4,12 +4,12 @@
 
 | Service | Technologie | Port interne |
 |---|---|---|
-| vehicle-service | Java Spring Boot | 3001 |
+| vehicle-service | Java Spring Boot | 8080 |
 | driver-service | FastAPI | 8000 |
-| maintenance-service | FastAPI | 8001 |
+| maintenance-service | FastAPI | 8000 |
 | location-service | Node.js NestJS | 3000 |
 | mission-service | Node.js NestJS | 3000 |
-| notification-service | Go | 8080 |
+| event-service | Go | 8080 |
 
 ---
 
@@ -90,6 +90,18 @@ docker compose down
 # Arrêter et reset les volumes
 docker compose down -v
 ```
+
+### Guide rapide  — Docker Compose
+
+**Accès principal**
+- Frontend: http://localhost:5173
+- API Gateway: http://localhost:4000
+- Keycloak: http://localhost:8080
+
+**Observabilité (optionnel)**
+- Grafana: http://localhost:3000
+- Prometheus: http://localhost:9090
+- Jaeger: http://localhost:16686
 
 ---
 
@@ -193,25 +205,32 @@ kubectl get pods -n fleet-dev
 kubectl get svc -n fleet-dev
 ```
 
-### Ingress
+### Guide rapide (prof) — Minikube
 
 ```bash
-# Activer l'Ingress Controller Minikube
+# 1) Démarrer Minikube
+minikube start --driver=docker
+
+# 2) Activer l'Ingress
 minikube addons enable ingress
 
-# Récupérer l'IP Minikube
+# 3) Déployer les manifests
+kubectl apply -f infra/k8s/
+
+# 4) Ajouter l'IP Minikube dans /etc/hosts
 minikube ip
-
-# Ajouter dans /etc/hosts (remplacer X.X.X.X par l'IP obtenue)
-echo "X.X.X.X fleet.local" | sudo tee -a /etc/hosts
-
-# Tester les routes
-curl http://fleet.local/api/vehicles
-curl http://fleet.local/api/drivers
-curl http://fleet.local/api/maintenance
-curl http://fleet.local/api/locations
-curl http://fleet.local/api/missions
+# Puis: echo "X.X.X.X fleet.local" | sudo tee -a /etc/hosts
 ```
+
+**Tester les routes (Ingress)**
+- http://fleet.local/api/vehicles
+- http://fleet.local/api/drivers
+- http://fleet.local/api/maintenance
+- http://fleet.local/api/locations
+- http://fleet.local/api/missions
+- http://fleet.local/api/events
+
+---
 
 # Kafka 
 
@@ -233,7 +252,7 @@ minikube start --memory=8192 --cpus=4
 ### Appliquer la configuration
 
 ```bash
-kubectl apply -f k8s/kafka-confluent.yaml
+kubectl apply -f kafka-confluent.yaml
 ```
 
 ### Vérifier que le pod tourne
