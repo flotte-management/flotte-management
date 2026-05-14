@@ -11,6 +11,20 @@ spec:
     - host: fleet.local
       http:
         paths:
+          - path: /about
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-about
+                port:
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
           - path: /api/vehicles
             pathType: Prefix
             backend:
@@ -51,5 +65,15 @@ spec:
             backend:
               service:
                 name: event-service
+                port:
+                  number: 8080
+    - host: keycloak.fleet.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak
                 port:
                   number: 8080

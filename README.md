@@ -140,6 +140,12 @@ helm install postgres bitnami/postgresql \
   --namespace fleet-dev \
   --set auth.postgresPassword=secret
 
+# TimescaleDB (requis pour location-service)
+# Utiliser cette option a la place du Postgres standard.
+# Le service expose aussi le nom "postgres-postgresql" pour garder la compatibilite.
+kubectl apply -f infra/k8s/postgres-init-db.yaml
+kubectl apply -f infra/k8s/timescaledb.yaml
+
 # Redis
 helm install redis bitnami/redis \
   --namespace fleet-dev \
@@ -194,6 +200,8 @@ minikube image load maintenance-service:latest
 minikube image load location-service:latest
 minikube image load mission-service:latest
 minikube image load event-service:latest
+minikube image load frontend:latest
+minikube image load frontend-about:latest
 
 # Appliquer tous les manifests Kubernetes
 kubectl apply -f infra/k8s/
@@ -205,7 +213,7 @@ kubectl get pods -n fleet-dev
 kubectl get svc -n fleet-dev
 ```
 
-### Guide rapide (prof) — Minikube
+### Guide rapide  — Minikube
 
 ```bash
 # 1) Démarrer Minikube
@@ -219,10 +227,13 @@ kubectl apply -f infra/k8s/
 
 # 4) Ajouter l'IP Minikube dans /etc/hosts
 minikube ip
-# Puis: echo "X.X.X.X fleet.local" | sudo tee -a /etc/hosts
+# Puis: echo "X.X.X.X fleet.local keycloak.fleet.local" | sudo tee -a /etc/hosts
 ```
 
 **Tester les routes (Ingress)**
+- http://fleet.local/
+- http://fleet.local/about
+- http://keycloak.fleet.local
 - http://fleet.local/api/vehicles
 - http://fleet.local/api/drivers
 - http://fleet.local/api/maintenance

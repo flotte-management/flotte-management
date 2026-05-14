@@ -106,7 +106,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+      - ./infra/keycloak:/opt/keycloak/data/import:ro
     depends_on:
       - keycloak-db
 
@@ -354,8 +354,14 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      # 👈 ON UTILISE 'args' POUR PASSER LES VARIABLES PENDANT LE BUILD
+      args:
+        - VITE_KEYCLOAK_URL=http://localhost:8080
+        - VITE_KEYCLOAK_REALM=flotte-management
+        - VITE_KEYCLOAK_CLIENT_ID=flotte-frontend
+        - VITE_API_URL=http://localhost:4000/graphql
     ports:
-      - "5173:80" # On accde  l'app via http://localhost:5173
+      - "5173:80"
     container_name: flotte-frontend
     restart: unless-stopped
 

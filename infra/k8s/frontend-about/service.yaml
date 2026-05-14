@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-about
+  namespace: fleet-dev
+spec:
+  selector:
+    app: frontend-about
+  ports:
+    - port: 80
+      targetPort: 80
+
