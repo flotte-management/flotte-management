@@ -33,6 +33,33 @@ function extractItems(res: unknown): Record<string, unknown>[] {
   if (Array.isArray(r.content)) return r.content as Record<string, unknown>[];
   return [];
 }
+function normalizeStatutInput(value: unknown): unknown {
+  return typeof value === 'string' ? value.toLowerCase() : value;
+}
+
+function mapVehiculeStatutInput(value: unknown): unknown {
+  return value === 'EN_MISSION' ? 'EN_SERVICE' : value;
+}
+
+function mapVehiculeStatutOutput(value: unknown): unknown {
+  return value === 'EN_SERVICE' ? 'EN_MISSION' : value;
+}
+
+function normalizeVehicule(v: Record<string, unknown>): Record<string, unknown> {
+  return {
+    ...v,
+    statut: mapVehiculeStatutOutput(v.statut),
+  };
+}
+
+function normalizeHistoriqueStatut(h: Record<string, unknown>): Record<string, unknown> {
+  return {
+    ...h,
+    statutAvant: mapVehiculeStatutOutput(h.statutAvant ?? h.statut_avant),
+    statutApres: mapVehiculeStatutOutput(h.statutApres ?? h.statut_apres),
+  };
+}
+
 function normalizeConducteur(d: Record<string, unknown>): Record<string, unknown> {
   return {
     ...d,
@@ -92,19 +119,21 @@ export const resolvers = {
       const pageIndex = typeof args.page === 'number'
         ? Math.max(0, (args.page as number) - 1)
         : undefined;
-      const q = buildQuery({ statut: args.statut, page: pageIndex, size: args.limit });
+      const statut = mapVehiculeStatutInput(args.statut);
+      const q = buildQuery({ statut, page: pageIndex, size: args.limit });
       const res = await vehicleApi.list(q, ctx.token);
       logger.debug('vehiculeApi.list raw response keys: %o', Object.keys((res as Record<string, unknown>) ?? {}));
-      return extractItems(res);
+      return extractItems(res).map(normalizeVehicule);
     },
 
     async vehicule(_: unknown, args: { id: string }, ctx: GatewayContext) {
-      return ctx.loaders.vehiculeLoader.load(args.id);
+      const res = await ctx.loaders.vehiculeLoader.load(args.id) as Record<string, unknown>;
+      return res ? normalizeVehicule(res) : null;
     },
 
     async historiqueStatutVehicule(_: unknown, args: { id: string }, ctx: GatewayContext) {
       const res = await vehicleApi.historique(args.id, ctx.token);
-      return extractItems(res);
+      return extractItems(res).map(normalizeHistoriqueStatut);
     },
 
     async conducteurs(_: unknown, args: Record<string, unknown>, ctx: GatewayContext) {
@@ -137,7 +166,8 @@ export const resolvers = {
     },
 
     async maintenances(_: unknown, args: Record<string, unknown>, ctx: GatewayContext) {
-      const q = buildQuery({ vehiculeId: args.vehiculeId, statut: args.statut, page: args.page, limit: args.limit });
+      const statut = normalizeStatutInput(args.statut);
+      const q = buildQuery({ vehiculeId: args.vehiculeId, statut, page: args.page, limit: args.limit });
       const res = await maintenanceApi.list(q, ctx.token);
       return extractItems(res).map(normalizeMaintenance);
     },
@@ -174,7 +204,7 @@ export const resolvers = {
         maintenanceApi.list('?limit=1000', ctx.token),
       ]);
 
-      const vList = vehiculesRes.status === 'fulfilled' ? extractItems(vehiculesRes.value) as Record<string, string>[] : [];
+      const vList = vehiculesRes.status === 'fulfilled' ? extractItems(vehiculesRes.value).map(normalizeVehicule) as Record<string, string>[] : [];
       const cList = conducteursRes.status === 'fulfilled' ? extractItems(conducteursRes.value) as Record<string, string>[] : [];
       const mList = missionsRes.status === 'fulfilled' ? extractItems(missionsRes.value) as Record<string, string>[] : [];
       const xList = maintenancesRes.status === 'fulfilled' ? extractItems(maintenancesRes.value) as Record<string, string>[] : [];
@@ -196,16 +226,31 @@ export const resolvers = {
 
   // ── Mutation ───────────────────────────────────────────────────────────────
   Mutation: {
-    async creerVehicule(_: unknown, args: { input: unknown }, ctx: GatewayContext) {
-      return vehicleApi.create(args.input, ctx.token);
+    async creerVehicule(_: unknown, args: { input: Record<string, unknown> }, ctx: GatewayContext) {
+      const input = {
+        ...args.input,
+        statut: mapVehiculeStatutInput(args.input?.statut),
+      };
+      const res = await vehicleApi.create(input, ctx.token) as Record<string, unknown>;
+      return normalizeVehicule(res);
     },
 
-    async modifierVehicule(_: unknown, args: { id: string; input: unknown }, ctx: GatewayContext) {
-      return vehicleApi.update(args.id, args.input, ctx.token);
+    async modifierVehicule(_: unknown, args: { id: string; input: Record<string, unknown> }, ctx: GatewayContext) {
+      const input = {
+        ...args.input,
+        statut: mapVehiculeStatutInput(args.input?.statut),
+      };
+      const res = await vehicleApi.update(args.id, input, ctx.token) as Record<string, unknown>;
+      return normalizeVehicule(res);
     },
 
-    async changerStatutVehicule(_: unknown, args: { id: string; input: unknown }, ctx: GatewayContext) {
-      return vehicleApi.changeStatut(args.id, args.input, ctx.token);
+    async changerStatutVehicule(_: unknown, args: { id: string; input: Record<string, unknown> }, ctx: GatewayContext) {
+      const input = {
+        ...args.input,
+        statut: mapVehiculeStatutInput(args.input?.statut),
+      };
+      const res = await vehicleApi.changeStatut(args.id, input, ctx.token) as Record<string, unknown>;
+      return normalizeVehicule(res);
     },
 
     async supprimerVehicule(_: unknown, args: { id: string }, ctx: GatewayContext) {
@@ -214,15 +259,19 @@ export const resolvers = {
     },
 
     async creerConducteur(_: unknown, args: { input: unknown }, ctx: GatewayContext) {
-      return driverApi.create(args.input, ctx.token);
+      const res = await driverApi.create(args.input, ctx.token) as Record<string, unknown>;
+      return normalizeConducteur(res);
     },
 
     async modifierConducteur(_: unknown, args: { id: string; input: unknown }, ctx: GatewayContext) {
-      return driverApi.update(args.id, args.input, ctx.token);
+      const res = await driverApi.update(args.id, args.input, ctx.token) as Record<string, unknown>;
+      return normalizeConducteur(res);
     },
 
     async changerStatutConducteur(_: unknown, args: { id: string; statut: string }, ctx: GatewayContext) {
-      return driverApi.updateStatut(args.id, { statut: args.statut }, ctx.token);
+      const statut = normalizeStatutInput(args.statut);
+      const res = await driverApi.updateStatut(args.id, { statut }, ctx.token) as Record<string, unknown>;
+      return normalizeConducteur(res);
     },
 
     async supprimerConducteur(_: unknown, args: { id: string }, ctx: GatewayContext) {
@@ -287,11 +336,14 @@ export const resolvers = {
     },
 
     async modifierMaintenance(_: unknown, args: { id: string; input: unknown }, ctx: GatewayContext) {
-      return maintenanceApi.update(args.id, args.input, ctx.token);
+      const res = await maintenanceApi.update(args.id, args.input, ctx.token) as Record<string, unknown>;
+      return normalizeMaintenance(res);
     },
 
     async changerStatutMaintenance(_: unknown, args: { id: string; statut: string }, ctx: GatewayContext) {
-      return maintenanceApi.changeStatut(args.id, args.statut, ctx.token);
+      const statut = normalizeStatutInput(args.statut) as string;
+      const res = await maintenanceApi.changeStatut(args.id, statut, ctx.token) as Record<string, unknown>;
+      return normalizeMaintenance(res);
     },
 
     async supprimerMaintenance(_: unknown, args: { id: string }, ctx: GatewayContext) {

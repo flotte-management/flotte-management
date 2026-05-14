@@ -12,7 +12,7 @@ import { MISSION_QUERY, CHANGER_STATUT_MISSION, SUPPRIMER_MISSION } from '../../
 import type { Mission, StatutMission } from '../../types';
 import { ArrowLeft, Trash2, MapPin } from 'lucide-react';
 
-const STATUTS: StatutMission[] = ['PLANIFIEE', 'EN_COURS', 'TERMINEE', 'ANNULEE', 'SUSPENDUE'];
+const STATUTS: StatutMission[] = ['PLANIFIEE', 'EN_COURS', 'TERMINEE', 'ANNULEE'];
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -43,8 +43,9 @@ export default function MissionDetail() {
   const canDelete = hasAnyRole(['ADMIN']);
 
   const handleChangeStatut = async () => {
+    if (!id) return;
     try {
-      await changerStatut({ variables: { id, statut: newStatut } });
+      await changerStatut({ variables: { id, input: { statut: newStatut } } });
       toast.success(`Statut changé en ${newStatut}`); setStatutModal(false); refetch();
     } catch (err: unknown) { toast.error((err as Error).message ?? 'Erreur'); }
   };

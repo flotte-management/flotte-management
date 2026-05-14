@@ -21,8 +21,10 @@ _MAX_IDEMPOTENCY_CACHE = 10_000
 async def run_consumer():
     """
     Consume mission events and react to:
-      - mission.started   → driver status → EN_MISSION (via DB update)
+      - mission.created   → driver status → en_mission
+      - mission.started   → driver status → en_mission
       - mission.completed → driver status → actif
+      - mission.cancelled → driver status → actif
     """
     consumer = AIOKafkaConsumer(
         "flotte.missions",
@@ -54,7 +56,9 @@ async def run_consumer():
 
                 logger.info("Mission event: type=%s id=%s", event_type, event_id)
 
-                if event_type == "mission.started":
+                if event_type == "mission.created":
+                    await _handle_mission_created(payload)
+                elif event_type == "mission.started":
                     await _handle_mission_started(payload)
                 elif event_type == "mission.completed":
                     await _handle_mission_completed(payload)
@@ -83,6 +87,19 @@ async def run_consumer():
         logger.info("Driver Kafka consumer stopped")
 
 
+async def _handle_mission_created(payload: dict):
+    """Mark driver as on mission when mission is created."""
+    conductor_id = payload.get("conducteurId") or payload.get("conducteur_id")
+    mission_id = payload.get("missionId") or payload.get("mission_id")
+
+    if not conductor_id:
+        logger.warning("mission.created event missing conducteurId, skipping")
+        return
+
+    logger.info("Driver %s created mission %s — updating status", conductor_id, mission_id)
+    await _update_driver_statut(conductor_id, "en_mission")
+
+
 async def _handle_mission_started(payload: dict):
     """Mark driver as actively on mission."""
     conductor_id = payload.get("conducteurId") or payload.get("conducteur_id")
@@ -93,7 +110,7 @@ async def _handle_mission_started(payload: dict):
         return
 
     logger.info("Driver %s started mission %s — updating status", conductor_id, mission_id)
-    await _update_driver_statut(conductor_id, "actif")
+    await _update_driver_statut(conductor_id, "en_mission")
 
 
 async def _handle_mission_completed(payload: dict):

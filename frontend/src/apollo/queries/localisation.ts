@@ -24,3 +24,17 @@ export const HISTORIQUE_POSITIONS_QUERY = gql`
     }
   }
 `;
+
+export const INGEST_POSITION_MUTATION = gql`
+  mutation IngestPosition($input: IngestPositionInput!) {
+    ingestPosition(input: $input) {
+      vehiculeId
+      latitude
+      longitude
+      vitesse
+      cap
+      precision
+      time
+    }
+  }
+`;

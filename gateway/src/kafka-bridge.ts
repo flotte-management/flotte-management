@@ -18,6 +18,10 @@ export const MISSION_EVENT = 'MISSION_EVENT';
 
 let consumer: Consumer | null = null;
 
+function mapVehiculeStatutOutput(value: unknown): unknown {
+  return value === 'EN_SERVICE' ? 'EN_MISSION' : value;
+}
+
 /**
  * Start Kafka consumer and bridge events to GraphQL PubSub.
  */
@@ -89,8 +93,8 @@ function bridgeEvent(
     pubsub.publish(VEHICULE_STATUT_CHANGED, {
       vehiculeStatutChange: {
         vehiculeId:   payload.vehiculeId,
-        statutAvant:  payload.statutAvant,
-        statutApres:  payload.statutApres,
+        statutAvant:  mapVehiculeStatutOutput(payload.statutAvant),
+        statutApres:  mapVehiculeStatutOutput(payload.statutApres),
         motif:        payload.motif,
         timestamp:    envelope.timestamp,
       },

@@ -29,6 +29,8 @@ class StatutDriver(str, enum.Enum):
     actif = "actif"
     inactif = "inactif"
     suspendu = "suspendu"
+    en_mission = "en_mission"
+    en_conge = "en_conge"
 
 
 # ── Tables ────────────────────────────────────────────────────────────────────
