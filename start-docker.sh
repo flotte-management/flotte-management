@@ -33,6 +33,8 @@ cat <<EOF > frontend/.env
 VITE_KEYCLOAK_URL=http://localhost:8080
 VITE_KEYCLOAK_REALM=flotte-management
 VITE_KEYCLOAK_CLIENT_ID=flotte-frontend
+VITE_GRAPHQL_URL=http://localhost:4000/graphql
+VITE_GRAPHQL_WS_URL=ws://localhost:4000/graphql
 VITE_API_URL=http://localhost:4000/graphql
 EOF
   info "Fichier frontend/.env généré avec succès."

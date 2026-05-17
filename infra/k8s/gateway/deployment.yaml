@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: fleet-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      containers:
+        - name: gateway
+          image: gateway:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 4000
+          env:
+            - name: GATEWAY_PORT
+              value: "4000"
+            - name: NODE_ENV
+              value: production
+            - name: VEHICLE_SERVICE_URL
+              value: http://vehicle-service:8080
+            - name: DRIVER_SERVICE_URL
+              value: http://driver-service:8000
+            - name: MAINTENANCE_SERVICE_URL
+              value: http://maintenance-service:8000
+            - name: MISSION_SERVICE_URL
+              value: http://mission-service:3000
+            - name: LOCATION_SERVICE_URL
+              value: http://location-service:3000
+            - name: KAFKA_BROKERS
+              value: kafka:9092
+            - name: KAFKA_CLIENT_ID
+              value: gateway-service
+            - name: KAFKA_GROUP_ID
+              value: gateway-group
+            - name: KEYCLOAK_REALM_URL
+              value: http://keycloak:8080/realms/flotte-management
+            - name: KEYCLOAK_CLIENT_ID
+              value: flotte-services
+            - name: KEYCLOAK_VERIFY_ISSUER
+              value: "false"
+            - name: CORS_ORIGIN
+              value: http://fleet.local
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "125m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+

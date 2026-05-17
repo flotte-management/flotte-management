@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gateway-ingress
+  namespace: fleet-dev
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: fleet.local
+      http:
+        paths:
+          - path: /graphql
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway
+                port:
+                  number: 4000
+

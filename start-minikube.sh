@@ -213,12 +213,12 @@ if [[ -f "infra/k8s/timescaledb.yaml" ]]; then
   info "Application de timescaledb.yaml..."
   kubectl apply -f infra/k8s/timescaledb.yaml -n fleet-dev
 
-  info "Attente que TimescaleDB soit opérationnel..."
-  kubectl wait pod \
-    --for=condition=Ready \
-    --namespace=fleet-dev \
-    -l app=timescaledb \
-    --timeout=120s 2>/dev/null || warn "Pod TimescaleDB pas encore prêt."
+  info "Attente que le conteneur TimescaleDB soit créé et prêt..."
+
+  kubectl rollout status deployment/timescaledb -n fleet-dev --timeout=180s || error "Le déploiement TimescaleDB a échoué."
+
+  info "Attente supplémentaire de 10s pour l'initialisation interne de PostgreSQL..."
+  sleep 10
 else
   warn "infra/k8s/timescaledb.yaml introuvable — skip déploiement TimescaleDB."
 fi
@@ -271,13 +271,25 @@ for svc in "${SERVICES[@]}"; do
   fi
 done
 
+if [[ -f "gateway/Dockerfile" ]]; then
+  info "Build de l'image gateway:latest..."
+  docker build -t gateway:latest ./gateway
+  info "Chargement de gateway:latest dans Minikube..."
+  minikube image load gateway:latest
+else
+  warn "gateway/Dockerfile introuvable — skip gateway."
+fi
+
 # Frontend + microfrontend
 if [[ -f "frontend/Dockerfile" ]]; then
   info "Build de l'image frontend:latest (Keycloak K8s)..."
   docker build -t frontend:latest ./frontend \
     --build-arg VITE_KEYCLOAK_URL=http://keycloak.fleet.local \
     --build-arg VITE_KEYCLOAK_REALM=flotte-management \
-    --build-arg VITE_KEYCLOAK_CLIENT_ID=flotte-frontend
+    --build-arg VITE_KEYCLOAK_CLIENT_ID=flotte-frontend \
+    --build-arg VITE_GRAPHQL_URL=http://fleet.local/graphql \
+    --build-arg VITE_GRAPHQL_WS_URL=ws://fleet.local/graphql \
+    --build-arg VITE_API_URL=http://fleet.local/graphql
   info "Chargement de frontend:latest dans Minikube..."
   minikube image load frontend:latest
 else
@@ -300,7 +312,7 @@ if [[ ! -d "infra/k8s" ]]; then
   error "Répertoire infra/k8s/ introuvable. Assurez-vous d'exécuter ce script depuis la racine du projet."
 fi
 
-SERVICES_K8S=("vehicle-service" "driver-service" "maintenance-service" "location-service" "mission-service" "event-service" "frontend" "frontend-about")
+SERVICES_K8S=("vehicle-service" "driver-service" "maintenance-service" "location-service" "mission-service" "event-service" "gateway" "frontend" "frontend-about")
 
 for svc in "${SERVICES_K8S[@]}"; do
   if [[ -d "infra/k8s/$svc" ]]; then
@@ -348,4 +360,3 @@ echo ""
 echo -e "  État des pods :"
 kubectl get pods -n fleet-dev 2>/dev/null || true
 echo ""
-

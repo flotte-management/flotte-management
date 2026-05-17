@@ -5,8 +5,14 @@ import { setContext } from '@apollo/client/link/context';
 import { createClient } from 'graphql-ws';
 import keycloak from '../auth/keycloak';
 
-const GRAPHQL_URL = import.meta.env.VITE_GRAPHQL_URL ?? 'http://localhost:4000/graphql';
-const GRAPHQL_WS_URL = import.meta.env.VITE_GRAPHQL_WS_URL ?? 'ws://localhost:4000/graphql';
+const GRAPHQL_URL =
+  import.meta.env.VITE_GRAPHQL_URL ??
+  import.meta.env.VITE_API_URL ??
+  'http://localhost:4000/graphql';
+
+const GRAPHQL_WS_URL =
+  import.meta.env.VITE_GRAPHQL_WS_URL ??
+  GRAPHQL_URL.replace(/^http/, 'ws');
 
 const httpLink = new HttpLink({ uri: GRAPHQL_URL });
 
