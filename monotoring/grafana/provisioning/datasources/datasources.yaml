@@ -10,4 +10,18 @@ datasources:
     type: jaeger
     access: proxy
     url: http://jaeger:16686
-
+  - name: TimescaleDB
+    uid: TimescaleDB
+    type: postgres
+    access: proxy
+    url: postgres-location:5432
+    database: location_db
+    user: postgres
+    secureJsonData:
+      password: secret
+    jsonData:
+      database: location_db
+      sslmode: disable
+      postgresVersion: 1500
+      timescaledb: true
+    editable: true

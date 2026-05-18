@@ -23,7 +23,7 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // Endpoints publics (doc, actuator health)
-                        .requestMatchers("/actuator/health", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers("/actuator/health", "/metrics", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         // Tout le reste nécessite un JWT valide ; les rôles sont vérifiés par @PreAuthorize
                         .anyRequest().authenticated()
                 )

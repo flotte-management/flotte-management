@@ -9,7 +9,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi import Response
 from fastapi.middleware.cors import CORSMiddleware
-from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+from prometheus_client import CONTENT_TYPE_LATEST, REGISTRY, generate_latest
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.api.v1.router import api_router
 from app.core.config import get_settings
@@ -60,6 +61,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ── Metrics instrumentation ───────────────────────────────────────────────────
+instrumentator = Instrumentator().instrument(app)
 # ── Routes ────────────────────────────────────────────────────────────────────
 app.include_router(api_router)
 
@@ -76,5 +79,4 @@ async def metrics():
         repo = DriverRepository(session)
         active_count = await repo.count_by_statut(StatutDriver.actif)
         set_drivers_active(active_count)
-    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
-
+    return Response(generate_latest(REGISTRY), media_type=CONTENT_TYPE_LATEST)

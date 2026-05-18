@@ -6,7 +6,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi import Response
 from fastapi.middleware.cors import CORSMiddleware
-from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+from prometheus_client import CONTENT_TYPE_LATEST, REGISTRY, generate_latest
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.api.v1.router import api_router
 from app.core.config import settings
@@ -66,6 +67,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ── Metrics instrumentation ───────────────────────────────────────────────────
+instrumentator = Instrumentator(registry=REGISTRY).instrument(app)
+
 app.include_router(api_router)
 
 
@@ -76,4 +80,4 @@ async def health():
 
 @app.get("/metrics")
 async def metrics():
-    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+    return Response(generate_latest(REGISTRY), media_type=CONTENT_TYPE_LATEST)
