@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@apollo/client/react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { AppLayout } from '../../components/layout/AppLayout';
 import { Card } from '../../components/ui/Card';
@@ -39,12 +39,6 @@ export default function ConducteurDetail() {
   const { data, loading, refetch } = useQuery<{ conducteur: Conducteur }>(CONDUCTEUR_QUERY, {
     variables: { id }, skip: !id,
   });
-
-  useEffect(() => {
-    if (data?.conducteur) {
-      setEditForm({ nom: data.conducteur.nom, prenom: data.conducteur.prenom, email: data.conducteur.email ?? '', telephone: data.conducteur.telephone ?? '' });
-    }
-  }, [data?.conducteur]);
 
   const { data: missionsData } = useQuery<{ missions: Mission[] }>(MISSIONS_QUERY, {
     variables: { conducteurId: id, limit: 10 }, skip: !id,
@@ -91,7 +85,23 @@ export default function ConducteurDetail() {
         <Button variant="ghost" size="sm" onClick={() => navigate('/conducteurs')}><ArrowLeft size={14} /> Retour</Button>
         <div style={{ flex: 1 }} />
         {canEdit && <>
-          <Button variant="secondary" size="sm" onClick={() => setEditModal(true)}>Modifier</Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              if (conducteur) {
+                setEditForm({
+                  nom: conducteur.nom,
+                  prenom: conducteur.prenom,
+                  email: conducteur.email ?? '',
+                  telephone: conducteur.telephone ?? '',
+                });
+              }
+              setEditModal(true);
+            }}
+          >
+            Modifier
+          </Button>
           <Button variant="secondary" size="sm" onClick={() => { setNewStatut(conducteur.statut); setStatutModal(true); }}>
             <RefreshCcw size={14} /> Changer statut
           </Button>
