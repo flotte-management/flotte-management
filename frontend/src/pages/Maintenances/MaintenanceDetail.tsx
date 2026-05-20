@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@apollo/client/react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { AppLayout } from '../../components/layout/AppLayout';
 import { Card } from '../../components/ui/Card';
@@ -38,15 +38,6 @@ export default function MaintenanceDetail() {
   const { data, loading, refetch } = useQuery<{ maintenance: Maintenance }>(MAINTENANCE_QUERY, {
     variables: { id }, skip: !id,
   });
-
-  useEffect(() => {
-    if (data?.maintenance) setEditForm({
-      description: data.maintenance.description ?? '',
-      prestataire: data.maintenance.prestataire ?? '',
-      cout: data.maintenance.cout != null ? String(data.maintenance.cout) : '',
-      dateFin: data.maintenance.dateFin ?? '',
-    });
-  }, [data?.maintenance]);
 
   const [changerStatut, { loading: changingStatut }] = useMutation(CHANGER_STATUT_MAINTENANCE);
   const [modifierMaintenance, { loading: modifying }] = useMutation(MODIFIER_MAINTENANCE);
@@ -92,7 +83,23 @@ export default function MaintenanceDetail() {
         <Button variant="ghost" size="sm" onClick={() => navigate('/maintenances')}><ArrowLeft size={14} /> Retour</Button>
         <div style={{ flex: 1 }} />
         {canEdit && <>
-          <Button variant="secondary" size="sm" onClick={() => setEditModal(true)}>Modifier</Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              if (m) {
+                setEditForm({
+                  description: m.description ?? '',
+                  prestataire: m.prestataire ?? '',
+                  cout: m.cout != null ? String(m.cout) : '',
+                  dateFin: m.dateFin ?? '',
+                });
+              }
+              setEditModal(true);
+            }}
+          >
+            Modifier
+          </Button>
           <Button variant="secondary" size="sm" onClick={() => { setNewStatut(m.statut); setStatutModal(true); }}>Changer statut</Button>
         </>}
         {canDelete && <Button variant="danger" size="sm" onClick={() => setDeleteModal(true)}><Trash2 size={14} /></Button>}

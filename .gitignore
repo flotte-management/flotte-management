@@ -8,6 +8,8 @@ venv/
 *.egg-info/
 dist/
 build/
+tools/loadgen/.venv/
+tools/.venv/
 
 # Java / Maven
 target/

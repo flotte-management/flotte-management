@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery, useSubscription, useMutation, useApolloClient } from '@apollo/client/react';
 import { AppLayout } from '../../components/layout/AppLayout';
@@ -74,8 +74,10 @@ function VehiculeMap({ vehicles }: { vehicles: Array<{ vehicule: Vehicule; posit
     (async () => {
       const leaflet = await getLeaflet();
       const icon = await getCarIcon();
+      const visibleIds = new Set<string>();
       vehicles.forEach(({ vehicule, position }) => {
         if (!position) return;
+        visibleIds.add(vehicule.id);
         const { latitude, longitude } = position;
         const existing = markersRef.current[vehicule.id];
         if (existing) {
@@ -95,6 +97,13 @@ function VehiculeMap({ vehicles }: { vehicles: Array<{ vehicule: Vehicule; posit
           markersRef.current[vehicule.id] = marker;
         }
       });
+
+      Object.entries(markersRef.current).forEach(([id, marker]) => {
+        if (!visibleIds.has(id)) {
+          marker.removeFrom(map);
+          delete markersRef.current[id];
+        }
+      });
     })();
   }, [vehicles]);
 
@@ -105,27 +114,25 @@ function VehiculeMap({ vehicles }: { vehicles: Array<{ vehicule: Vehicule; posit
 
 /* ---- Live position hook for selected vehicle ---- */
 function useLivePosition(vehiculeId: string | null) {
-  const [livePos, setLivePos] = useState<Position | null>(null);
+  const [livePos, setLivePos] = useState<{ vehiculeId: string; position: Position } | null>(null);
 
   const { data: staticData } = useQuery<{ positionActuelle: Position }>(POSITION_ACTUELLE_QUERY, {
     variables: { vehiculeId },
     skip: !vehiculeId,
   });
 
-  useEffect(() => {
-    if (staticData?.positionActuelle) setLivePos(staticData.positionActuelle);
-  }, [staticData?.positionActuelle]);
-
   useSubscription(POSITION_VEHICULE_SUBSCRIPTION, {
     variables: { vehiculeId },
     skip: !vehiculeId,
     onData: (options) => {
       const pos = (options.data.data as { positionVehicule?: Position } | undefined)?.positionVehicule;
-      if (pos) setLivePos(pos);
+      if (pos && vehiculeId) setLivePos({ vehiculeId, position: pos });
     },
   });
 
-  return livePos ?? staticData?.positionActuelle ?? null;
+  const staticPosition = staticData?.positionActuelle ?? null;
+  const currentLive = livePos?.vehiculeId === vehiculeId ? livePos.position : null;
+  return currentLive ?? staticPosition ?? null;
 }
 
 /* ---- Main page ---- */
@@ -147,7 +154,7 @@ export default function Localisation() {
     fetchPolicy: 'cache-and-network',
   });
 
-  const vehicules = vehiculesData?.vehicules ?? [];
+  const vehicules = useMemo(() => vehiculesData?.vehicules ?? [], [vehiculesData?.vehicules]);
   const livePosition = useLivePosition(selectedId);
 
   useEffect(() => {

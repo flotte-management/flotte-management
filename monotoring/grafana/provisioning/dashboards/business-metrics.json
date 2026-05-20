@@ -62,6 +62,10 @@
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
       "gridPos": { "h": 6, "w": 18, "x": 6, "y": 0 },
       "id": 3,
+      "fieldConfig": {
+        "defaults": { "unit": "req/s" },
+        "overrides": []
+      },
       "options": { "legend": { "showLegend": true } },
       "targets": [
         {
@@ -84,35 +88,73 @@
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
       "gridPos": { "h": 6, "w": 12, "x": 0, "y": 6 },
       "id": 4,
+      "fieldConfig": {
+        "defaults": { "unit": "req/s" },
+        "overrides": []
+      },
       "options": { "legend": { "showLegend": true } },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "Prometheus" },
           "expr": "sum by (job) (rate(http_server_requests_seconds_count{status=~\"5..\"}[5m]))",
-          "legendFormat": "{{job}} (spring)",
+          "legendFormat": "{{job}} 5xx (spring)",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "Prometheus" },
           "expr": "sum by (job) (rate(http_requests_total{code=~\"5..\"}[5m]))",
-          "legendFormat": "{{job}} (http)",
+          "legendFormat": "{{job}} 5xx (http)",
           "refId": "B"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "expr": "sum by (job) (rate(http_requests_total{status=~\"5..\"}[5m]))",
+          "legendFormat": "{{job}} 5xx (fastapi)",
+          "refId": "B2"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "expr": "sum by (job) (rate(http_server_requests_seconds_count{status=~\"4..\"}[5m]))",
+          "legendFormat": "{{job}} 4xx (spring)",
+          "refId": "C"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "expr": "sum by (job) (rate(http_requests_total{code=~\"4..\"}[5m]))",
+          "legendFormat": "{{job}} 4xx (http)",
+          "refId": "D"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "expr": "sum by (job) (rate(http_requests_total{status=~\"4..\"}[5m]))",
+          "legendFormat": "{{job}} 4xx (fastapi)",
+          "refId": "D2"
         }
       ],
-      "title": "Erreurs 5xx (req/s)",
+      "title": "Erreurs 4xx/5xx (req/s)",
       "type": "timeseries"
     },
     {
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
       "gridPos": { "h": 6, "w": 12, "x": 12, "y": 6 },
       "id": 5,
+      "fieldConfig": {
+        "defaults": { "unit": "s" },
+        "overrides": []
+      },
       "options": { "legend": { "showLegend": true } },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "Prometheus" },
           "expr": "histogram_quantile(0.95, sum by (le, job) (rate(http_server_requests_seconds_bucket[5m])))",
-          "legendFormat": "{{job}}",
+          "legendFormat": "{{job}} (spring)",
           "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "expr": "histogram_quantile(0.95, sum by (le, job) (rate(http_request_duration_seconds_bucket[5m])))",
+          "legendFormat": "{{job}} (fastapi)",
+          "refId": "B"
         }
       ],
       "title": "Latence P95 (s)",
@@ -197,6 +239,74 @@
       ],
       "title": "Véhicules actifs",
       "type": "stat"
+    },
+    {
+      "datasource": { "type": "postgres", "uid": "TimescaleDB" },
+      "description": "Derniere position GPS de chaque vehicule.",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 18 },
+      "id": 10,
+      "options": {
+        "controls": { "showScale": true, "showZoom": true },
+        "layers": [
+          {
+            "type": "markers",
+            "name": "Positions",
+            "config": {
+              "showLegend": false,
+              "style": { "color": "red", "size": 10 }
+            },
+            "location": {
+              "mode": "coords",
+              "latitudeField": "latitude",
+              "longitudeField": "longitude"
+            }
+          }
+        ],
+        "tooltip": { "mode": "details" },
+        "view": { "id": "auto" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "TimescaleDB" },
+          "format": "table",
+          "rawSql": "SELECT DISTINCT ON (vehicule_id) \"time\" AS time, latitude AS latitude, longitude AS longitude, vehicule_id AS vehicle FROM positions_gps ORDER BY vehicule_id, \"time\" DESC;",
+          "refId": "A"
+        }
+      ],
+      "title": "Position temps reel (flotte)",
+      "type": "geomap"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 18 },
+      "id": 12,
+      "options": { "legend": { "showLegend": false } },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "expr": "100 * (sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[5m])) + sum(rate(http_requests_total{code=~\"5..\"}[5m])) + sum(rate(http_requests_total{status=~\"5..\"}[5m]))) / (sum(rate(http_server_requests_seconds_count[5m])) + sum(rate(http_requests_total[5m])))",
+          "legendFormat": "5xx%",
+          "refId": "A"
+        }
+      ],
+      "title": "Taux d'erreur 5xx (%)",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 18 },
+      "id": 13,
+      "options": { "legend": { "showLegend": false } },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "expr": "max(histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket[5m]))) or histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m]))))",
+          "legendFormat": "p95",
+          "refId": "A"
+        }
+      ],
+      "title": "Latence P95 globale (s)",
+      "type": "stat"
     }
   ],
   "refresh": "5s",
@@ -213,5 +323,5 @@
   "timezone": "browser",
   "title": "Business Metrics - Flotte",
   "uid": "business_metrics_01",
-  "version": 1
+  "version": 4
 }
